@@ -138,31 +138,28 @@ export default function TableManagement() {
               <div className="pt-3 border-t border-black/5 flex gap-1.5 text-[11px]">
                 <button
                   onClick={() => handleUpdateStatus(table.id, 'available')}
-                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${
-                    table.status === 'available'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white/80 hover:bg-white text-slate-700'
-                  }`}
+                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${table.status === 'available'
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-white/80 hover:bg-white text-slate-700'
+                    }`}
                 >
                   Kosong
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(table.id, 'occupied')}
-                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${
-                    table.status === 'occupied'
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-white/80 hover:bg-white text-slate-700'
-                  }`}
+                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${table.status === 'occupied'
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-white/80 hover:bg-white text-slate-700'
+                    }`}
                 >
                   Terisi
                 </button>
                 <button
                   onClick={() => handleUpdateStatus(table.id, 'reserved')}
-                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${
-                    table.status === 'reserved'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white/80 hover:bg-white text-slate-700'
-                  }`}
+                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${table.status === 'reserved'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-white/80 hover:bg-white text-slate-700'
+                    }`}
                 >
                   Booking
                 </button>

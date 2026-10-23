@@ -45,16 +45,27 @@ class MenuController extends Controller
             'cost_price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_base64' => 'nullable|string',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(5);
         $validated['cost_price'] = $validated['cost_price'] ?? 0;
         $validated['is_available'] = $request->boolean('is_available', true);
 
-        if ($request->hasFile('image')) {
+        if ($request->filled('image_base64')) {
+            $imagePath = $this->storeBase64Image((string) $validated['image_base64']);
+
+            if (! $imagePath) {
+                return $this->invalidImageResponse();
+            }
+
+            $validated['image_path'] = $imagePath;
+        } elseif ($request->hasFile('image')) {
             $path = $request->file('image')->store('menus', 'public');
             $validated['image_path'] = '/storage/' . $path;
         }
+
+        unset($validated['image'], $validated['image_base64']);
 
         $menu = Menu::create($validated);
         $menu->load('category');
@@ -86,15 +97,25 @@ class MenuController extends Controller
             'cost_price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image_base64' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($menu->image_path && Storage::disk('public')->exists(str_replace('/storage/', '', $menu->image_path))) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $menu->image_path));
+        if ($request->filled('image_base64')) {
+            $imagePath = $this->storeBase64Image((string) $validated['image_base64']);
+
+            if (! $imagePath) {
+                return $this->invalidImageResponse();
             }
+
+            $this->deleteStoredImage($menu);
+            $validated['image_path'] = $imagePath;
+        } elseif ($request->hasFile('image')) {
+            $this->deleteStoredImage($menu);
             $path = $request->file('image')->store('menus', 'public');
             $validated['image_path'] = '/storage/' . $path;
         }
+
+        unset($validated['image'], $validated['image_base64']);
 
         $menu->update($validated);
         $menu->load('category');
@@ -121,9 +142,7 @@ class MenuController extends Controller
 
     public function destroy(Menu $menu): JsonResponse
     {
-        if ($menu->image_path && Storage::disk('public')->exists(str_replace('/storage/', '', $menu->image_path))) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $menu->image_path));
-        }
+        $this->deleteStoredImage($menu);
 
         $menu->delete();
 
@@ -131,5 +150,62 @@ class MenuController extends Controller
             'success' => true,
             'message' => 'Menu berhasil dihapus',
         ]);
+    }
+
+    private function storeBase64Image(string $dataUrl): ?string
+    {
+        if (! preg_match('/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/s', $dataUrl, $matches)) {
+            return null;
+        }
+
+        $binary = base64_decode($matches[2], true);
+
+        if ($binary === false || $binary === '' || strlen($binary) > 2048 * 1024) {
+            return null;
+        }
+
+        $info = @getimagesizefromstring($binary);
+        $mime = $info['mime'] ?? null;
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+
+        if (! $mime || ! isset($extensions[$mime])) {
+            return null;
+        }
+
+        $path = 'menus/' . Str::uuid() . '.' . $extensions[$mime];
+
+        if (! Storage::disk('public')->put($path, $binary)) {
+            return null;
+        }
+
+        return '/storage/' . $path;
+    }
+
+    private function deleteStoredImage(Menu $menu): void
+    {
+        if (! $menu->image_path) {
+            return;
+        }
+
+        $path = str_replace('/storage/', '', $menu->image_path);
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function invalidImageResponse(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Foto tidak valid. Gunakan JPG, PNG, atau WEBP maksimal 2MB.',
+            'errors' => [
+                'image' => ['Foto tidak valid. Gunakan JPG, PNG, atau WEBP maksimal 2MB.'],
+            ],
+        ], 422);
     }
 }

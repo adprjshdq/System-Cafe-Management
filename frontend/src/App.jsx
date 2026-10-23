@@ -11,6 +11,7 @@ import KitchenDisplay from './pages/kitchen/KitchenDisplay';
 import MenuManagement from './pages/menus/MenuManagement';
 import TableManagement from './pages/tables/TableManagement';
 import OrderHistory from './pages/orders/OrderHistory';
+import UserManagement from './pages/users/UserManagement';
 
 // Protected Route Guard
 function ProtectedRoute({ children, allowedRoles }) {
@@ -54,6 +55,14 @@ export default function App() {
               <Route path="menus" element={<MenuManagement />} />
               <Route path="tables" element={<TableManagement />} />
               <Route path="orders" element={<OrderHistory />} />
+              <Route
+                path="users"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
 
             {/* Fallback */}

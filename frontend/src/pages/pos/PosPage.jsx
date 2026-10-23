@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  ShoppingBag, 
-  Utensils, 
-  DollarSign, 
-  QrCode, 
-  CreditCard, 
-  CheckCircle2, 
-  Printer, 
+import {
+  Search,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingBag,
+  Utensils,
+  DollarSign,
+  QrCode,
+  CreditCard,
+  CheckCircle2,
+  Printer,
   X,
-  Coffee,
   Sparkles
 } from 'lucide-react';
 import api from '../../services/api';
 import { useCart } from '../../context/CartContext';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
+import MenuThumbnail from '../../components/MenuThumbnail';
 
 // Fallback initial menus if server is initializing
 const fallbackMenus = [
@@ -197,11 +197,10 @@ export default function PosPage() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  String(activeCategory) === String(cat.id)
-                    ? 'bg-amber-500 text-slate-950 shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${String(activeCategory) === String(cat.id)
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
               >
                 {cat.name}
               </button>
@@ -220,15 +219,11 @@ export default function PosPage() {
               >
                 <div>
                   <div className="w-full h-24 bg-slate-200 rounded-lg mb-2.5 overflow-hidden flex items-center justify-center text-slate-400">
-                    {menu.image_path ? (
-                      <img
-                        src={`http://localhost:8000${menu.image_path}`}
-                        alt={menu.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Coffee className="w-8 h-8 text-slate-400 group-hover:scale-110 transition-transform" />
-                    )}
+                    <MenuThumbnail
+                      menu={menu}
+                      categories={categories}
+                      iconClassName="w-8 h-8 text-slate-400 group-hover:scale-110 transition-transform"
+                    />
                   </div>
                   <h4 className="font-semibold text-slate-800 text-xs line-clamp-1 group-hover:text-amber-800">
                     {menu.name}
@@ -274,11 +269,10 @@ export default function PosPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setOrderType('dine_in')}
-              className={`py-1.5 rounded-xl text-xs font-bold transition-all ${
-                orderType === 'dine_in'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`py-1.5 rounded-xl text-xs font-bold transition-all ${orderType === 'dine_in'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
             >
               Dine-In (Makan di Tempat)
             </button>
@@ -287,11 +281,10 @@ export default function PosPage() {
                 setOrderType('takeaway');
                 setSelectedTable(null);
               }}
-              className={`py-1.5 rounded-xl text-xs font-bold transition-all ${
-                orderType === 'takeaway'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
+              className={`py-1.5 rounded-xl text-xs font-bold transition-all ${orderType === 'takeaway'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
             >
               Takeaway (Bungkus)
             </button>
@@ -427,11 +420,10 @@ export default function PosPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('cash')}
-                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
-                      paymentMethod === 'cash'
-                        ? 'border-amber-500 bg-amber-50/50 text-amber-800'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                    }`}
+                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'cash'
+                      ? 'border-amber-500 bg-amber-50/50 text-amber-800'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                      }`}
                   >
                     <DollarSign className="w-5 h-5 mx-auto mb-1 text-emerald-600" />
                     Tunai
@@ -439,11 +431,10 @@ export default function PosPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('qris')}
-                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
-                      paymentMethod === 'qris'
-                        ? 'border-amber-500 bg-amber-50/50 text-amber-800'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                    }`}
+                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'qris'
+                      ? 'border-amber-500 bg-amber-50/50 text-amber-800'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                      }`}
                   >
                     <QrCode className="w-5 h-5 mx-auto mb-1 text-slate-800" />
                     QRIS
@@ -451,11 +442,10 @@ export default function PosPage() {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('transfer')}
-                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${
-                      paymentMethod === 'transfer'
-                        ? 'border-amber-500 bg-amber-50/50 text-amber-800'
-                        : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                    }`}
+                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'transfer'
+                      ? 'border-amber-500 bg-amber-50/50 text-amber-800'
+                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                      }`}
                   >
                     <CreditCard className="w-5 h-5 mx-auto mb-1 text-blue-600" />
                     Transfer

@@ -105,11 +105,10 @@ export default function KitchenDisplay() {
         </div>
         <div className="text-right">
           <span
-            className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
-              order.order_type === 'dine_in'
-                ? 'bg-amber-100 text-amber-800'
-                : 'bg-blue-100 text-blue-800'
-            }`}
+            className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${order.order_type === 'dine_in'
+              ? 'bg-amber-100 text-amber-800'
+              : 'bg-blue-100 text-blue-800'
+              }`}
           >
             {order.order_type === 'dine_in' ? order.table?.table_number || 'Dine-In' : 'Takeaway'}
           </span>

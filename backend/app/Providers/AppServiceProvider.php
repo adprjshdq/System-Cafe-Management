@@ -19,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (app()->runningInConsole()) {
+            $serveCommand = \Illuminate\Foundation\Console\ServeCommand::class;
+
+            $serveCommand::$passthroughVariables = array_values(array_unique(array_merge(
+                $serveCommand::$passthroughVariables,
+                ['TEMP', 'TMP']
+            )));
+        }
     }
 }

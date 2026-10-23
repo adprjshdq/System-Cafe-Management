@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle2, XCircle, Search, Coffee, UtensilsCrossed, X } from 'lucide-react';
 import api from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
+import { getMenuImage } from '../../utils/menuImages';
+import MenuThumbnail from '../../components/MenuThumbnail';
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
 const sampleMenus = [
   { id: 1, name: 'Espresso Single', category: { name: 'Coffee' }, category_id: 1, price: 18000, cost_price: 7000, is_available: true, description: 'Arabika single shot' },
@@ -23,6 +33,8 @@ export default function MenuManagement() {
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -49,8 +61,14 @@ export default function MenuManagement() {
     fetchMenus();
   }, []);
 
+  const resetImageState = (preview = null) => {
+    setImageFile(null);
+    setImagePreview(preview);
+  };
+
   const handleOpenAdd = () => {
     setEditingMenu(null);
+    resetImageState(null);
     setFormData({
       name: '',
       category_id: categories[0]?.id || '1',
@@ -64,6 +82,7 @@ export default function MenuManagement() {
 
   const handleOpenEdit = (menu) => {
     setEditingMenu(menu);
+    resetImageState(getMenuImage(menu, categories));
     setFormData({
       name: menu.name,
       category_id: menu.category_id || '1',
@@ -75,23 +94,67 @@ export default function MenuManagement() {
     setIsModalOpen(true);
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      alert('Format foto harus JPG, PNG, atau WEBP.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran foto maksimal 2MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setImageFile(file);
+
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveMenu = async (e) => {
     e.preventDefault();
+
+    const payload = {
+      ...formData,
+      is_available: formData.is_available ? 1 : 0,
+    };
+
+    if (imageFile) {
+      try {
+        payload.image_base64 = await readFileAsDataUrl(imageFile);
+      } catch {
+        alert('Gagal membaca file foto. Silakan pilih ulang.');
+        return;
+      }
+    }
+
     try {
       if (editingMenu) {
-        await api.post(`/v1/menus/${editingMenu.id}`, formData);
+        await api.post(`/v1/menus/${editingMenu.id}`, payload);
       } else {
-        await api.post('/v1/menus', formData);
+        await api.post('/v1/menus', payload);
       }
-      fetchMenus();
+      await fetchMenus();
     } catch (err) {
-      // Local fallback for demo
+      if (err.response) {
+        alert(err.response.data?.message || 'Gagal menyimpan menu. Periksa kembali data Anda.');
+        return;
+      }
+
+      // Local fallback saat API/offline
+      const localData = { ...formData, image_path: imagePreview };
       if (editingMenu) {
-        setMenus(menus.map(m => m.id === editingMenu.id ? { ...m, ...formData } : m));
+        setMenus(menus.map(m => m.id === editingMenu.id ? { ...m, ...localData } : m));
       } else {
         const newId = Date.now();
         const cat = categories.find(c => String(c.id) === String(formData.category_id));
-        setMenus([...menus, { id: newId, ...formData, category: { name: cat?.name || 'Umum' } }]);
+        setMenus([...menus, { id: newId, ...localData, category: { name: cat?.name || 'Umum' } }]);
       }
     }
     setIsModalOpen(false);
@@ -178,8 +241,19 @@ export default function MenuManagement() {
                 return (
                   <tr key={menu.id} className="hover:bg-slate-50/60 transition-colors">
                     <td className="p-4">
-                      <div className="font-semibold text-slate-900">{menu.name}</div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1">{menu.description || '-'}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
+                          <MenuThumbnail
+                            menu={menu}
+                            categories={categories}
+                            iconClassName="w-4 h-4 text-slate-400"
+                          />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-slate-900">{menu.name}</div>
+                          <div className="text-[11px] text-slate-400 line-clamp-1">{menu.description || '-'}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="p-4">
                       <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold text-[11px]">
@@ -196,11 +270,10 @@ export default function MenuManagement() {
                     <td className="p-4">
                       <button
                         onClick={() => handleToggle(menu)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                          menu.is_available
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${menu.is_available
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-rose-100 text-rose-800'
+                          }`}
                       >
                         {menu.is_available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                         <span>{menu.is_available ? 'Tersedia' : 'Habis'}</span>
@@ -270,6 +343,30 @@ export default function MenuManagement() {
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Foto Menu</label>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Preview menu" className="w-full h-full object-cover" />
+                    ) : (
+                      <Coffee className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleImageChange}
+                      className="block w-full text-[11px] text-slate-500 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-800 file:font-semibold hover:file:bg-amber-200 file:cursor-pointer cursor-pointer"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">
+                      {imageFile ? imageFile.name : 'JPG, PNG, atau WEBP. Maksimal 2MB.'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

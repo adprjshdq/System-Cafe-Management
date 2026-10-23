@@ -9,7 +9,7 @@ export default function MainLayout() {
   const getPageTitle = (pathname) => {
     switch (pathname) {
       case '/':
-        return 'Dashboard & Ringkasan';
+        return 'Dashboard';
       case '/pos':
         return 'Point of Sale (POS) Kasir';
       case '/kitchen':
@@ -20,6 +20,8 @@ export default function MainLayout() {
         return 'Manajemen Denah & Meja';
       case '/orders':
         return 'Riwayat Transaksi & Struk';
+      case '/users':
+        return 'Manajemen Pengguna & Staf';
       default:
         return 'Cafe Management System';
     }

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  Users, 
-  Grid, 
-  ArrowUpRight, 
-  Coffee, 
-  Flame, 
-  Receipt 
+import {
+  TrendingUp,
+  ShoppingBag,
+  Users,
+  Grid,
+  ArrowUpRight,
+  Coffee,
+  Flame,
+  Receipt
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
@@ -59,7 +59,7 @@ export default function Dashboard() {
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 uppercase tracking-wider">
             Operasional Hari Ini
           </span>
-          <h1 className="text-2xl font-bold mt-2">Selamat Datang di Aroma Cafe System</h1>
+          <h1 className="text-2xl font-bold mt-2">Selamat Datang di Cafe 24 Jam</h1>
           <p className="text-slate-300 text-sm mt-1">
             Pantau arus kas, status antrean barista, dan keterisian meja secara langsung.
           </p>

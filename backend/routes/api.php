@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\MenuController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\TableController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Health Check / Ping
@@ -64,5 +65,13 @@ Route::prefix('v1')->group(function () {
         // Pembayaran & Struk Kasir
         Route::post('/orders/{order}/pay', [PaymentController::class, 'store']);
         Route::get('/orders/{order}/receipt', [PaymentController::class, 'receipt']);
+
+        // Kelola Pengguna (User Management)
+        Route::get('/users', [UserController::class, 'index']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::get('/users/{user}', [UserController::class, 'show']);
+        Route::put('/users/{user}', [UserController::class, 'update']);
+        Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
     });
 });
