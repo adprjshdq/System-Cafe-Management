@@ -341,19 +341,17 @@ export default function KitchenDisplay() {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
               <span
-                className={`font-mono font-bold tracking-tight ${strongText} ${
-                  kiosk ? 'text-sm xl:text-base' : 'text-xs'
-                }`}
+                className={`font-mono font-bold tracking-tight ${strongText} ${kiosk ? 'text-sm xl:text-base' : 'text-xs'
+                  }`}
               >
                 {order.order_number}
               </span>
               {urgencyMeta.badge && (
                 <span
-                  className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
-                    urgency === 'late'
+                  className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${urgency === 'late'
                       ? 'bg-rose-600 text-white'
                       : 'bg-amber-400 text-slate-950'
-                  }`}
+                    }`}
                 >
                   <AlertTriangle className="h-3 w-3" />
                   {urgencyMeta.badge}
@@ -379,9 +377,8 @@ export default function KitchenDisplay() {
 
           <div className="shrink-0 text-right">
             <p
-              className={`font-mono font-extrabold tabular-nums ${timerColor} ${
-                kiosk ? 'text-3xl xl:text-5xl' : 'text-2xl'
-              }`}
+              className={`font-mono font-extrabold tabular-nums ${timerColor} ${kiosk ? 'text-3xl xl:text-5xl' : 'text-2xl'
+                }`}
               aria-label={`Durasi ${urgencyMeta.label}: ${formatDuration(elapsed)}`}
             >
               {formatDuration(elapsed)}
@@ -403,17 +400,15 @@ export default function KitchenDisplay() {
               className={`flex items-start gap-2.5 rounded-lg p-2 ${itemBox}`}
             >
               <span
-                className={`shrink-0 rounded-md px-1.5 py-0.5 font-extrabold tabular-nums ${qtyBox} ${
-                  kiosk ? 'text-base xl:text-lg' : 'text-xs'
-                }`}
+                className={`shrink-0 rounded-md px-1.5 py-0.5 font-extrabold tabular-nums ${qtyBox} ${kiosk ? 'text-base xl:text-lg' : 'text-xs'
+                  }`}
               >
                 {item.quantity}x
               </span>
               <div className="min-w-0 flex-1">
                 <p
-                  className={`font-bold leading-snug ${strongText} ${
-                    kiosk ? 'text-sm xl:text-lg' : 'text-xs'
-                  }`}
+                  className={`font-bold leading-snug ${strongText} ${kiosk ? 'text-sm xl:text-lg' : 'text-xs'
+                    }`}
                 >
                   {item.name || item.menu?.name || 'Item Menu'}
                 </p>
@@ -434,9 +429,8 @@ export default function KitchenDisplay() {
             <button
               type="button"
               onClick={() => updateOrderStatus(order.id, 'processing')}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 font-extrabold text-white transition-colors hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:scale-[0.99] ${
-                kiosk ? 'py-3 text-sm xl:py-4 xl:text-lg' : 'py-2.5 text-xs'
-              }`}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 font-extrabold text-white transition-colors hover:bg-rose-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 active:scale-[0.99] ${kiosk ? 'py-3 text-sm xl:py-4 xl:text-lg' : 'py-2.5 text-xs'
+                }`}
             >
               <Flame className={kiosk ? 'h-5 w-5' : 'h-4 w-4'} />
               <span>Mulai Kerjakan</span>
@@ -447,9 +441,8 @@ export default function KitchenDisplay() {
             <button
               type="button"
               onClick={() => updateOrderStatus(order.id, 'ready')}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 font-extrabold text-slate-950 transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:scale-[0.99] ${
-                kiosk ? 'py-3 text-sm xl:py-4 xl:text-lg' : 'py-2.5 text-xs'
-              }`}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 font-extrabold text-slate-950 transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 active:scale-[0.99] ${kiosk ? 'py-3 text-sm xl:py-4 xl:text-lg' : 'py-2.5 text-xs'
+                }`}
             >
               <CheckCircle2 className={kiosk ? 'h-5 w-5' : 'h-4 w-4'} />
               <span>Siap Disajikan</span>
@@ -459,9 +452,8 @@ export default function KitchenDisplay() {
             <button
               type="button"
               onClick={() => updateOrderStatus(order.id, 'completed')}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 font-extrabold text-white transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 active:scale-[0.99] ${
-                kiosk ? 'py-3 text-sm xl:py-4 xl:text-lg' : 'py-2.5 text-xs'
-              }`}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 font-extrabold text-white transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 active:scale-[0.99] ${kiosk ? 'py-3 text-sm xl:py-4 xl:text-lg' : 'py-2.5 text-xs'
+                }`}
             >
               <CheckCircle2 className={kiosk ? 'h-5 w-5' : 'h-4 w-4'} />
               <span>Selesaikan Pesanan</span>
@@ -477,16 +469,14 @@ export default function KitchenDisplay() {
     return (
       <section
         key={status}
-        className={`flex flex-col overflow-hidden rounded-2xl border ${
-          'border-slate-200 bg-slate-100/80'
-        }`}
+        className={`flex flex-col overflow-hidden rounded-2xl border ${'border-slate-200 bg-slate-100/80'
+          }`}
       >
         <header className={`flex items-center justify-between gap-2 px-3.5 py-2.5 xl:px-4 xl:py-3 ${meta.header}`}>
           <div className="min-w-0">
             <h3
-              className={`truncate font-extrabold ${meta.headerText} ${
-                kiosk ? 'text-base xl:text-xl' : 'text-sm'
-              }`}
+              className={`truncate font-extrabold ${meta.headerText} ${kiosk ? 'text-base xl:text-xl' : 'text-sm'
+                }`}
             >
               {meta.title}
             </h3>
@@ -495,24 +485,21 @@ export default function KitchenDisplay() {
             </p>
           </div>
           <span
-            className={`flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-2 font-extrabold tabular-nums ${meta.count} ${
-              kiosk ? 'text-base xl:h-9 xl:min-w-9 xl:text-lg' : 'text-xs'
-            }`}
+            className={`flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full px-2 font-extrabold tabular-nums ${meta.count} ${kiosk ? 'text-base xl:h-9 xl:min-w-9 xl:text-lg' : 'text-xs'
+              }`}
           >
             {list.length}
           </span>
         </header>
 
         <div
-          className={`space-y-2.5 p-2.5 xl:p-3 ${
-            kiosk ? 'max-h-[calc(100dvh-14rem)] overflow-y-auto' : ''
-          }`}
+          className={`space-y-2.5 p-2.5 xl:p-3 ${kiosk ? 'max-h-[calc(100dvh-14rem)] overflow-y-auto' : ''
+            }`}
         >
           {list.length === 0 ? (
             <div
-              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-8 text-center ${
-                'border-slate-300 text-slate-400'
-              }`}
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-8 text-center ${'border-slate-300 text-slate-400'
+                }`}
             >
               <CheckCircle2 className={kiosk ? 'h-7 w-7' : 'h-6 w-6'} />
               <p className={`font-semibold ${kiosk ? 'text-sm' : 'text-xs'}`}>
@@ -543,10 +530,9 @@ export default function KitchenDisplay() {
       aria-pressed={soundOn}
       aria-label={soundOn ? 'Matikan suara notifikasi' : 'Aktifkan suara notifikasi'}
       className={
-        `flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors ${
-          soundOn
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+        `flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold transition-colors ${soundOn
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+          : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
         }`
       }
     >
@@ -634,21 +620,19 @@ export default function KitchenDisplay() {
                 {orders.length} aktif
               </span>
               <span
-                className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold xl:text-sm ${
-                  lateCount > 0
+                className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold xl:text-sm ${lateCount > 0
                     ? 'border-rose-300 bg-rose-50 text-rose-600'
                     : 'border-slate-200 bg-slate-50 text-slate-400'
-                }`}
+                  }`}
               >
                 <AlertTriangle className="h-4 w-4" />
                 {lateCount} terlambat
               </span>
               <span
-                className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold xl:text-sm ${
-                  warningCount > 0
+                className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold xl:text-sm ${warningCount > 0
                     ? 'border-amber-300 bg-amber-50 text-amber-600'
                     : 'border-slate-200 bg-slate-50 text-slate-400'
-                }`}
+                  }`}
               >
                 <Clock className="h-4 w-4" />
                 {warningCount} perhatian
@@ -694,8 +678,12 @@ export default function KitchenDisplay() {
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
-                <ChefHat className="h-6 w-6 text-amber-500" />
-                <span>Kitchen Display System (KDS)</span>
+                <img
+                  src="./public/kitchen.png"
+                  alt="Icon kitchen"
+                  className="h-7 w-7 object-contain"
+                />
+                <span>Kitchen Display</span>
               </h2>
               <p className="text-xs text-slate-500">
                 Pantau antrean, durasi tunggu, dan prioritas pesanan dapur secara real-time.
@@ -735,33 +723,29 @@ export default function KitchenDisplay() {
               </p>
             </div>
             <div
-              className={`rounded-2xl border p-3.5 shadow-xs ${
-                warningCount > 0 ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white'
-              }`}
+              className={`rounded-2xl border p-3.5 shadow-xs ${warningCount > 0 ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white'
+                }`}
             >
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 <AlertTriangle className="h-3.5 w-3.5" /> Perhatian
               </p>
               <p
-                className={`mt-1 text-2xl font-extrabold tabular-nums ${
-                  warningCount > 0 ? 'text-amber-600' : 'text-slate-900'
-                }`}
+                className={`mt-1 text-2xl font-extrabold tabular-nums ${warningCount > 0 ? 'text-amber-600' : 'text-slate-900'
+                  }`}
               >
                 {warningCount}
               </p>
             </div>
             <div
-              className={`rounded-2xl border p-3.5 shadow-xs ${
-                lateCount > 0 ? 'border-rose-300 bg-rose-50' : 'border-slate-200 bg-white'
-              }`}
+              className={`rounded-2xl border p-3.5 shadow-xs ${lateCount > 0 ? 'border-rose-300 bg-rose-50' : 'border-slate-200 bg-white'
+                }`}
             >
               <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                 <Flame className="h-3.5 w-3.5" /> Terlambat
               </p>
               <p
-                className={`mt-1 text-2xl font-extrabold tabular-nums ${
-                  lateCount > 0 ? 'text-rose-600' : 'text-slate-900'
-                }`}
+                className={`mt-1 text-2xl font-extrabold tabular-nums ${lateCount > 0 ? 'text-rose-600' : 'text-slate-900'
+                  }`}
               >
                 {lateCount}
               </p>

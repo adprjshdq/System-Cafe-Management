@@ -258,7 +258,11 @@ export default function MenuManagement() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
-            <UtensilsCrossed className="h-5 w-5 text-amber-500" />
+            <img
+              src="./public/menu.png"
+              alt="Icon Katalog Menu"
+              className="h-7 w-7 object-contain"
+            />
             <span>Katalog Menu</span>
           </h2>
           <p className="text-xs text-slate-500">
@@ -268,7 +272,7 @@ export default function MenuManagement() {
         <button
           type="button"
           onClick={handleOpenAdd}
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-brand-700 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
           <span>Tambah Menu</span>
@@ -326,11 +330,10 @@ export default function MenuManagement() {
                 aria-pressed={view === 'grid'}
                 aria-label="Tampilan kartu"
                 title="Tampilan kartu"
-                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                  view === 'grid'
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${view === 'grid'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-400 hover:text-slate-600'
-                }`}
+                  }`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
@@ -340,11 +343,10 @@ export default function MenuManagement() {
                 aria-pressed={view === 'table'}
                 aria-label="Tampilan tabel"
                 title="Tampilan tabel"
-                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                  view === 'table'
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${view === 'table'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-400 hover:text-slate-600'
-                }`}
+                  }`}
               >
                 <List className="h-4 w-4" />
               </button>
@@ -379,19 +381,17 @@ export default function MenuManagement() {
               type="button"
               onClick={() => setActiveCategory('all')}
               aria-pressed={activeCategory === 'all'}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
-                activeCategory === 'all'
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${activeCategory === 'all'
                   ? 'border-brand-700 bg-brand-700 text-white'
                   : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-              }`}
+                }`}
             >
               Semua
               <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${
-                  activeCategory === 'all'
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${activeCategory === 'all'
                     ? 'bg-white/20 text-white'
                     : 'bg-slate-100 text-slate-500'
-                }`}
+                  }`}
               >
                 {menus.length}
               </span>
@@ -406,17 +406,15 @@ export default function MenuManagement() {
                   type="button"
                   onClick={() => setActiveCategory(String(category.id))}
                   aria-pressed={active}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
-                    active
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${active
                       ? 'border-brand-700 bg-brand-700 text-white'
                       : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   {category.name}
                   <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${
-                      active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                    }`}
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                      }`}
                   >
                     {count}
                   </span>
@@ -545,11 +543,10 @@ export default function MenuManagement() {
                             disabled={togglingId === menu.id}
                             aria-pressed={Boolean(menu.is_available)}
                             aria-label={`Ubah ketersediaan ${menu.name}`}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
-                              menu.is_available
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${menu.is_available
                                 ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
                                 : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
-                            }`}
+                              }`}
                           >
                             {togglingId === menu.id ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
@@ -627,16 +624,14 @@ export default function MenuManagement() {
           className="animate-pos-toast fixed bottom-4 right-4 z-[80] w-[min(22rem,calc(100vw-2rem))]"
         >
           <div
-            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl ${
-              toast.type === 'error' ? 'border-rose-200' : 'border-emerald-200'
-            }`}
+            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl ${toast.type === 'error' ? 'border-rose-200' : 'border-emerald-200'
+              }`}
           >
             <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === 'error'
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toast.type === 'error'
                   ? 'bg-rose-100 text-rose-600'
                   : 'bg-emerald-100 text-emerald-600'
-              }`}
+                }`}
             >
               {toast.type === 'error' ? (
                 <AlertCircle className="h-4 w-4" />

@@ -290,11 +290,15 @@ export default function UserManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
-              <Users className="w-6 h-6" />
-            </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">Manajemen Pengguna & Hak Akses</h1>
+              <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                <img
+                  src="./public/icon_user.png"
+                  alt="Icon Manajemen Pengguna"
+                  className="h-7 w-7 object-contain"
+                />
+                <span>Manajemen Pengguna & Hak Akses</span>
+              </h2>
               <p className="text-xs sm:text-sm text-slate-500">
                 Kelola akun staf cafe, hak akses role (Admin, Kasir, Dapur, Waiter), dan status keaktifan.
               </p>
@@ -303,7 +307,7 @@ export default function UserManagement() {
         </div>
         <button
           onClick={handleOpenAdd}
-          className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold shadow-md shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm shrink-0"
+          className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-600 text-white font-semibold shadow-md shadow-brand-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm shrink-0"
         >
           <UserPlus className="w-4 h-4" />
           <span>Tambah Pengguna</span>
@@ -422,11 +426,10 @@ export default function UserManagement() {
             <button
               key={r.id}
               onClick={() => setSelectedRole(r.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                selectedRole === r.id
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedRole === r.id
                   ? 'bg-brand-700 text-white shadow-sm font-semibold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
-              }`}
+                }`}
             >
               {r.label}
             </button>
@@ -532,10 +535,10 @@ export default function UserManagement() {
                       <td className="py-4 px-6 text-xs text-slate-500">
                         {item.created_at
                           ? new Date(item.created_at).toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })
                           : '-'}
                       </td>
 
@@ -552,11 +555,10 @@ export default function UserManagement() {
                           <button
                             onClick={() => setDeleteConfirmUser(item)}
                             disabled={isCurrent}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              isCurrent
+                            className={`p-1.5 rounded-lg transition-colors ${isCurrent
                                 ? 'text-slate-300 cursor-not-allowed'
                                 : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
-                            }`}
+                              }`}
                             title={isCurrent ? 'Tidak bisa menghapus akun sendiri' : 'Hapus pengguna'}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -686,11 +688,10 @@ export default function UserManagement() {
                         type="button"
                         key={r.id}
                         onClick={() => setFormData({ ...formData, role: r.id })}
-                        className={`flex items-center space-x-2.5 p-3 rounded-xl border text-left transition-all ${
-                          isSelected
+                        className={`flex items-center space-x-2.5 p-3 rounded-xl border text-left transition-all ${isSelected
                             ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-600/20'
                             : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
+                          }`}
                       >
                         <RIcon className={`w-4 h-4 shrink-0 ${r.color}`} />
                         <div>

@@ -454,9 +454,13 @@ export default function PosPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                  <LayoutGrid className="h-4.5 w-4.5 text-amber-500" />
-                  Katalog Menu
+                <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                  <img
+                    src="./menu.png"
+                    alt="Icon Menu"
+                    className="h-7 w-7 object-contain"
+                  />
+                  <span>Katalog Menu</span>
                 </h2>
                 {isWaiter && (
                   <span
@@ -472,7 +476,7 @@ export default function PosPage() {
                 {isWaiter
                   ? 'Pilih menu, tentukan meja, lalu kirim pesanan ke dapur.'
                   : `${filteredMenus.length} menu ditampilkan` +
-                    (searchQuery.trim() ? ` untuk “${searchQuery.trim()}”` : '')}
+                  (searchQuery.trim() ? ` untuk “${searchQuery.trim()}”` : '')}
               </p>
             </div>
 
@@ -516,19 +520,17 @@ export default function PosPage() {
                     type="button"
                     onClick={() => setActiveCategory(cat.id)}
                     aria-pressed={String(activeCategory) === String(cat.id)}
-                    className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                      String(activeCategory) === String(cat.id)
-                        ? 'bg-brand-700 text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
+                    className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${String(activeCategory) === String(cat.id)
+                      ? 'bg-brand-700 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
                   >
                     {cat.name}
                     <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                        String(activeCategory) === String(cat.id)
-                          ? 'bg-white/20 text-white'
-                          : 'bg-white text-slate-400'
-                      }`}
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${String(activeCategory) === String(cat.id)
+                        ? 'bg-white/20 text-white'
+                        : 'bg-white text-slate-400'
+                        }`}
                     >
                       {count}
                     </span>
@@ -543,11 +545,10 @@ export default function PosPage() {
               aria-pressed={showAvailableOnly}
               aria-label={showAvailableOnly ? 'Tampilkan semua menu' : 'Tampilkan hanya menu tersedia'}
               title={showAvailableOnly ? 'Tampilkan semua menu' : 'Tampilkan hanya menu tersedia'}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
-                showAvailableOnly
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                  : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-              }`}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${showAvailableOnly
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                }`}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Hanya tersedia</span>
@@ -597,9 +598,8 @@ export default function PosPage() {
 
       {/* Kanan: Keranjang & Panel Transaksi (desktop) */}
       <aside
-        className={`hidden shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-[width] duration-200 lg:flex lg:flex-col xl:p-5 ${
-          isCartExpanded ? 'lg:w-[30rem] xl:w-[33rem]' : 'lg:w-[23rem] xl:w-[25rem]'
-        }`}
+        className={`hidden shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-[width] duration-200 lg:flex lg:flex-col xl:p-5 ${isCartExpanded ? 'lg:w-[30rem] xl:w-[33rem]' : 'lg:w-[23rem] xl:w-[25rem]'
+          }`}
       >
         <CartPanel
           cartItems={cartItems}
@@ -629,13 +629,12 @@ export default function PosPage() {
       {/* Mobile: bar ringkasan + bottom sheet keranjang */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-3 py-2.5 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-            <ShoppingBag className="h-5 w-5" />
-            {itemCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-extrabold text-slate-950">
-                {itemCount}
-              </span>
-            )}
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+            <img
+              src="./public/icon_keranjang.png"
+              alt="Keranjang Pesanan"
+              className="h-6 w-6 object-contain"
+            />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -846,11 +845,10 @@ export default function PosPage() {
               <button
                 type="button"
                 onClick={() => setIsReceiptOpen(false)}
-                className={`rounded-xl px-4 py-2.5 text-xs font-bold ${
-                  isWaiter
-                    ? 'flex-1 bg-slate-900 text-white hover:bg-slate-800'
-                    : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
+                className={`rounded-xl px-4 py-2.5 text-xs font-bold ${isWaiter
+                  ? 'flex-1 bg-slate-900 text-white hover:bg-slate-800'
+                  : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
               >
                 {isWaiter ? 'Buat Pesanan Baru' : 'Tutup'}
               </button>
@@ -864,11 +862,10 @@ export default function PosPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`animate-pos-toast fixed right-4 top-20 z-[60] flex max-w-xs items-start gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold shadow-lg ${
-            toast.tone === 'warning'
-              ? 'border-amber-200 bg-amber-50 text-amber-800'
-              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
-          }`}
+          className={`animate-pos-toast fixed right-4 top-20 z-[60] flex max-w-xs items-start gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold shadow-lg ${toast.tone === 'warning'
+            ? 'border-amber-200 bg-amber-50 text-amber-800'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            }`}
         >
           {toast.tone === 'warning' ? (
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />

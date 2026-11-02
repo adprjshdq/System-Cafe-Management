@@ -369,7 +369,11 @@ export default function TableManagement() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
-            <LayoutGrid className="h-5 w-5 text-amber-500" />
+            <img
+              src="./public/denah_meja.png"
+              alt="Icon Denah Meja"
+              className="h-7 w-7 object-contain"
+            />
             <span>Denah Meja</span>
           </h2>
           <p className="text-xs text-slate-500">
@@ -390,7 +394,7 @@ export default function TableManagement() {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
           >
             <Plus className="h-4 w-4" />
             Tambah Meja
@@ -520,16 +524,14 @@ export default function TableManagement() {
           className="animate-pos-toast fixed bottom-4 right-4 z-[80] w-[min(22rem,calc(100vw-2rem))]"
         >
           <div
-            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl ${
-              toast.type === 'error' ? 'border-rose-200' : 'border-emerald-200'
-            }`}
+            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl ${toast.type === 'error' ? 'border-rose-200' : 'border-emerald-200'
+              }`}
           >
             <span
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                toast.type === 'error'
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toast.type === 'error'
                   ? 'bg-rose-100 text-rose-600'
                   : 'bg-emerald-100 text-emerald-600'
-              }`}
+                }`}
             >
               {toast.type === 'error' ? (
                 <AlertCircle className="h-4 w-4" />

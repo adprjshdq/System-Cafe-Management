@@ -46,8 +46,12 @@ export default function CartPanel({
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-            <ShoppingBag className="h-4.5 w-4.5" />
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+            <img
+              src="./public/icon_keranjang.png"
+              alt="Keranjang Pesanan"
+              className="h-6 w-6 object-contain"
+            />
           </span>
           <div className="min-w-0">
             <h3 className="truncate text-base font-bold text-slate-900">
@@ -116,11 +120,10 @@ export default function CartPanel({
                 type="button"
                 onClick={() => setOrderType('dine_in')}
                 aria-pressed={orderType === 'dine_in'}
-                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
-                  orderType === 'dine_in'
+                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${orderType === 'dine_in'
                     ? 'bg-brand-700 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <UtensilsCrossed className="h-3.5 w-3.5" />
                 Dine-In
@@ -132,11 +135,10 @@ export default function CartPanel({
                   setSelectedTable(null);
                 }}
                 aria-pressed={orderType === 'takeaway'}
-                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${
-                  orderType === 'takeaway'
+                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-bold transition-all ${orderType === 'takeaway'
                     ? 'bg-brand-700 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Package className="h-3.5 w-3.5" />
                 Takeaway
@@ -162,11 +164,10 @@ export default function CartPanel({
                   setSelectedTable(table || null);
                 }}
                 aria-label="Pilih meja"
-                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-xs font-semibold transition-colors focus:bg-white focus:outline-none ${
-                  isWaiter && !selectedTable
+                className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-xs font-semibold transition-colors focus:bg-white focus:outline-none ${isWaiter && !selectedTable
                     ? 'border-amber-300 focus:border-amber-500'
                     : 'border-slate-200 focus:border-amber-500'
-                }`}
+                  }`}
               >
                 <option value="">{isWaiter ? 'Pilih meja (wajib)' : 'Pilih meja (opsional)'}</option>
                 {tables.map((table) => (
@@ -328,19 +329,17 @@ export default function CartPanel({
           type="button"
           onClick={onCheckout}
           disabled={cartItems.length === 0}
-          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-md transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 ${
-            isWaiter
+          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-md transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 ${isWaiter
               ? 'bg-emerald-600 text-white shadow-emerald-600/20 hover:bg-emerald-500'
               : 'bg-amber-500 text-slate-950 shadow-amber-500/20 hover:bg-amber-400'
-          }`}
+            }`}
         >
           {isWaiter ? <Send className="h-4 w-4" /> : <ReceiptText className="h-4 w-4" />}
           {isWaiter ? 'Kirim Pesanan' : 'Bayar Sekarang'}
           {cartItems.length > 0 && (
             <span
-              className={`rounded-lg px-2 py-0.5 text-xs font-extrabold ${
-                isWaiter ? 'bg-white/20' : 'bg-slate-950/10'
-              }`}
+              className={`rounded-lg px-2 py-0.5 text-xs font-extrabold ${isWaiter ? 'bg-white/20' : 'bg-slate-950/10'
+                }`}
             >
               {formatCurrency(totalAmount)}
             </span>

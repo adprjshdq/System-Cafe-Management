@@ -85,8 +85,12 @@ export default function OrderHistory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-amber-500" />
+          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <img
+              src="./public/icon_riwayat.png"
+              alt="Icon Riwayat Transaksi"
+              className="h-7 w-7 object-contain"
+            />
             <span>Riwayat Transaksi & Struk</span>
           </h2>
           <p className="text-xs text-slate-500">Daftar rekaman pesanan, detail transaksi, dan cetak ulang struk kasir.</p>

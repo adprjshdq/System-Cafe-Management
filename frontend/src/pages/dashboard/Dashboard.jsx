@@ -67,7 +67,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <Link
             to="/pos"
-            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md flex items-center gap-2"
+            className="px-4 py-2.5 bg-brand-700 hover:bg-brand-600 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-brand-900/20 flex items-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>Buka Kasir POS</span>

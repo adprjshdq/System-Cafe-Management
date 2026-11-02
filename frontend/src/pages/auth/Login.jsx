@@ -95,14 +95,14 @@ export default function Login() {
         </div>
 
         <div className="animate-auth-rise relative z-10 max-w-md">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300 backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-400/30 bg-brand-500/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-brand-300 backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
             SIMCAFE
           </span>
 
           <h1 className="mt-5 text-3xl font-bold leading-[1.15] tracking-tight text-white xl:text-[2.6rem]">
             Sistem Informasi Management Cafe{' '}
-            <span className="bg-brand-500">Berbasis Web App</span>.
+            <span>Berbasis Web App</span>.
           </h1>
 
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-300">
@@ -159,11 +159,6 @@ export default function Login() {
                 <p className="text-[11px] text-slate-400">Management System</p>
               </div>
             </div>
-
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
-              <ShieldCheck className="h-3 w-3" />
-              Portal Staf
-            </span>
 
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">
               Masuk ke akun Anda
@@ -254,7 +249,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/25 transition-all hover:bg-amber-400 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#7B432D] py-3 text-sm font-bold text-white shadow-md shadow-[#7B432D]/25 transition-all hover:bg-[#653522] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7B432D] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
                   <>
