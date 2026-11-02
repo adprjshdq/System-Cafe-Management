@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -23,7 +23,32 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('cafe_token', userToken);
         return { success: true, user: userData };
       }
+
+      // Server merespons tetapi login tidak berhasil (misal akun nonaktif)
+      throw new Error(response.data.message || 'Login gagal. Silakan coba lagi.');
     } catch (error) {
+      // Error dari server (kredensial salah, akun nonaktif, dll) harus
+      // diteruskan ke halaman login agar pesannya bisa ditampilkan.
+      if (error.response) {
+        const data = error.response.data;
+        const message =
+          data?.message ||
+          data?.errors?.email?.[0] ||
+          data?.errors?.password?.[0] ||
+          'Login gagal. Periksa kembali email dan kata sandi Anda.';
+        const authError = new Error(message);
+        authError.response = {
+          ...error.response,
+          data: { ...data, message },
+        };
+        throw authError;
+      }
+
+      if (error.message && !error.isAxiosError && !error.request) {
+        // Error yang kita lempar sendiri di atas (respons sukses tanpa data)
+        throw error;
+      }
+
       // Demo / Offline fallback untuk keperluan presentasi jika DB MySQL belum dinyalakan di XAMPP/Laragon
       console.warn('Backend API uncontactable, using demo auth mode:', error);
       let demoRole = 'admin';

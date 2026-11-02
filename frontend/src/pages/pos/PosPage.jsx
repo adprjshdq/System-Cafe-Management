@@ -1,36 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Search,
-  Plus,
-  Minus,
-  Trash2,
   ShoppingBag,
-  Utensils,
-  DollarSign,
-  QrCode,
-  CreditCard,
-  CheckCircle2,
   Printer,
   X,
-  Sparkles
+  CheckCircle2,
+  AlertCircle,
+  ChevronUp,
+  LayoutGrid,
+  Search,
+  Send,
+  SlidersHorizontal,
 } from 'lucide-react';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
-import MenuThumbnail from '../../components/MenuThumbnail';
+import ProductCard from './ProductCard';
+import SearchBox from './SearchBox';
+import CartPanel from './CartPanel';
+import CheckoutDialog from './CheckoutDialog';
+import SendOrderDialog from './SendOrderDialog';
+import { getMenuStatus, STATUS_DOT_CLASSES } from './posUtils';
 
 // Fallback initial menus if server is initializing
 const fallbackMenus = [
-  { id: 1, name: 'Espresso Single', category_id: 1, price: 18000, is_available: true, description: 'Arabika single shot' },
-  { id: 2, name: 'Iced Americano', category_id: 1, price: 22000, is_available: true, description: 'Espresso & es segar' },
-  { id: 3, name: 'Caramel Macchiato', category_id: 1, price: 28000, is_available: true, description: 'Espresso, susu, saus karamel' },
-  { id: 4, name: 'Kopi Susu Aren', category_id: 1, price: 24000, is_available: true, description: 'Aren organik creamy' },
-  { id: 5, name: 'Matcha Latte', category_id: 2, price: 27000, is_available: true, description: 'Matcha murni Uji Jepang' },
-  { id: 6, name: 'Signature Chocolate', category_id: 2, price: 26000, is_available: true, description: 'Cokelat Belgia pekat' },
-  { id: 7, name: 'Nasi Goreng Kampung', category_id: 3, price: 32000, is_available: true, description: 'Telur ceplok & ayam' },
-  { id: 8, name: 'Spaghetti Carbonara', category_id: 3, price: 38000, is_available: true, description: 'Smoked beef & parmesan' },
-  { id: 9, name: 'Crispy French Fries', category_id: 4, price: 20000, is_available: true, description: 'Kentang renyah + saus' },
-  { id: 10, name: 'Butter Croissant', category_id: 4, price: 22000, is_available: true, description: 'Flaky butter pastry' },
+  { id: 1, name: 'Espresso Single', category_id: 1, price: 18000, stock: 40, is_available: true, description: 'Arabika single shot' },
+  { id: 2, name: 'Iced Americano', category_id: 1, price: 22000, stock: 35, is_available: true, description: 'Espresso & es segar' },
+  { id: 3, name: 'Caramel Macchiato', category_id: 1, price: 28000, stock: 25, is_available: true, description: 'Espresso, susu, saus karamel' },
+  { id: 4, name: 'Kopi Susu Aren', category_id: 1, price: 24000, stock: 30, is_available: true, description: 'Aren organik creamy' },
+  { id: 5, name: 'Matcha Latte', category_id: 2, price: 27000, stock: 18, is_available: true, description: 'Matcha murni Uji Jepang' },
+  { id: 6, name: 'Signature Chocolate', category_id: 2, price: 26000, stock: 22, is_available: true, description: 'Cokelat Belgia pekat' },
+  { id: 7, name: 'Nasi Goreng Kampung', category_id: 3, price: 32000, stock: 15, is_available: true, description: 'Telur ceplok & ayam' },
+  { id: 8, name: 'Spaghetti Carbonara', category_id: 3, price: 38000, stock: 10, is_available: true, description: 'Smoked beef & parmesan' },
+  { id: 9, name: 'Crispy French Fries', category_id: 4, price: 20000, stock: 20, is_available: true, description: 'Kentang renyah + saus' },
+  { id: 10, name: 'Butter Croissant', category_id: 4, price: 22000, stock: 4, is_available: true, description: 'Flaky butter pastry' },
 ];
 
 const fallbackTables = [
@@ -46,23 +49,37 @@ export default function PosPage() {
   const [menus, setMenus] = useState(fallbackMenus);
   const [categories, setCategories] = useState([
     { id: 'all', name: 'Semua Kategori' },
-    { id: 1, name: 'Coffee' },
-    { id: 2, name: 'Non-Coffee' },
-    { id: 3, name: 'Main Course' },
-    { id: 4, name: 'Snacks' },
+    { id: 1, name: 'Coffee Series', slug: 'coffee' },
+    { id: 2, name: 'Non-Coffee', slug: 'non-coffee' },
+    { id: 3, name: 'Main Course', slug: 'main-course' },
+    { id: 4, name: 'Snacks & Pastry', slug: 'snacks' },
   ]);
   const [tables, setTables] = useState(fallbackTables);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+
+  // Layout
+  const [isCartExpanded, setIsCartExpanded] = useState(false);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   // Modals
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSendOrderOpen, setIsSendOrderOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [sendOrderError, setSendOrderError] = useState('');
 
   // Payment State
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [amountPaid, setAmountPaid] = useState('');
+
+  // Feedback
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+  const searchInputRef = useRef(null);
 
   const {
     cartItems,
@@ -82,47 +99,270 @@ export default function PosPage() {
     clearCart,
   } = useCart();
 
-  useEffect(() => {
-    // Fetch live data from backend
-    const fetchData = async () => {
-      try {
-        const [menuRes, catRes, tableRes] = await Promise.all([
-          api.get('/v1/menus'),
-          api.get('/v1/categories'),
-          api.get('/v1/tables'),
-        ]);
+  const { role } = useAuth();
+  // Pelayan membuat pesanan dari meja dan tidak pernah memproses pembayaran.
+  const isWaiter = role === 'waiter';
+  const effectiveOrderType = isWaiter ? 'dine_in' : orderType;
 
-        if (menuRes.data?.data?.length) setMenus(menuRes.data.data);
-        if (catRes.data?.data?.length) {
-          setCategories([{ id: 'all', name: 'Semua Kategori' }, ...catRes.data.data]);
-        }
-        if (tableRes.data?.data?.length) setTables(tableRes.data.data);
-      } catch (e) {
-        console.warn('API error, using demo menus:', e);
+  const fetchData = useCallback(async () => {
+    try {
+      const [menuRes, catRes, tableRes] = await Promise.all([
+        api.get('/v1/menus'),
+        api.get('/v1/categories'),
+        api.get('/v1/tables'),
+      ]);
+
+      if (menuRes.data?.data?.length) setMenus(menuRes.data.data);
+      if (catRes.data?.data?.length) {
+        setCategories([{ id: 'all', name: 'Semua Kategori' }, ...catRes.data.data]);
       }
-    };
-    fetchData();
+      if (tableRes.data?.data?.length) setTables(tableRes.data.data);
+    } catch (e) {
+      console.warn('API error, using demo menus:', e);
+    }
   }, []);
 
-  const filteredMenus = menus.filter((menu) => {
-    const matchCategory =
-      activeCategory === 'all' || String(menu.category_id) === String(activeCategory);
-    const matchSearch =
-      menu.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (menu.description && menu.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchCategory && matchSearch;
-  });
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    []
+  );
+
+  // Shortcut "/" atau Ctrl/Cmd+K untuk fokus ke pencarian.
+  useEffect(() => {
+    const handleShortcut = (event) => {
+      const activeElement = document.activeElement;
+      const isTyping =
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeElement?.tagName) ||
+        activeElement?.isContentEditable;
+
+      const isSlash = event.key === '/' && !isTyping;
+      const isCommandK = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+
+      if (isSlash || isCommandK) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileCartOpen) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setIsMobileCartOpen(false);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [isMobileCartOpen]);
+
+  const showToast = useCallback((message, tone = 'success') => {
+    setToast({ message, tone });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 2400);
+  }, []);
+
+  const cartQuantityById = useMemo(() => {
+    const map = {};
+    cartItems.forEach((item) => {
+      map[item.id] = item.quantity;
+    });
+    return map;
+  }, [cartItems]);
+
+  const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  const filteredMenus = useMemo(
+    () =>
+      menus.filter((menu) => {
+        const matchCategory =
+          activeCategory === 'all' || String(menu.category_id) === String(activeCategory);
+        const term = searchQuery.trim().toLowerCase();
+        const categoryName =
+          menu.category?.name ||
+          categories.find((cat) => String(cat.id) === String(menu.category_id))?.name ||
+          '';
+        const matchSearch =
+          !term ||
+          menu.name.toLowerCase().includes(term) ||
+          (menu.description || '').toLowerCase().includes(term) ||
+          categoryName.toLowerCase().includes(term);
+        const matchAvailability = !showAvailableOnly || !getMenuStatus(menu).disabled;
+
+        return matchCategory && matchSearch && matchAvailability;
+      }),
+    [menus, categories, activeCategory, searchQuery, showAvailableOnly]
+  );
+
+  const handleAddToCart = useCallback(
+    (menu) => {
+      const status = getMenuStatus(menu);
+
+      if (status.disabled) {
+        showToast(
+          status.stock === 0 ? `Stok ${menu.name} habis` : `${menu.name} sedang tidak tersedia`,
+          'warning'
+        );
+        return;
+      }
+
+      const quantityInCart = cartQuantityById[menu.id] || 0;
+      if (status.stock !== null && quantityInCart >= status.stock) {
+        showToast(`Stok ${menu.name} tersisa ${status.stock}`, 'warning');
+        return;
+      }
+
+      addToCart(menu);
+      showToast(`${menu.name} ditambahkan ke keranjang`);
+    },
+    [addToCart, cartQuantityById, showToast]
+  );
+
+  const handleUpdateQuantity = useCallback(
+    (menuId, quantity) => {
+      if (quantity <= 0) {
+        updateQuantity(menuId, 0);
+        return;
+      }
+
+      const menu = menus.find((item) => item.id === menuId);
+      const stock = typeof menu?.stock === 'number' ? menu.stock : null;
+
+      if (stock !== null && quantity > stock) {
+        showToast(`Stok ${menu?.name || 'menu'} tersisa ${stock}`, 'warning');
+        return;
+      }
+
+      updateQuantity(menuId, quantity);
+    },
+    [menus, showToast, updateQuantity]
+  );
+
+  const handleSelectCategory = useCallback((category) => {
+    setActiveCategory(category.id);
+    setSearchQuery('');
+  }, []);
+
+  const handleResetFilters = () => {
+    setActiveCategory('all');
+    setSearchQuery('');
+    setShowAvailableOnly(false);
+  };
 
   const handleOpenCheckout = () => {
     if (cartItems.length === 0) return;
-    setAmountPaid(totalAmount);
+
+    if (isWaiter) {
+      if (!selectedTable) {
+        showToast('Pilih meja terlebih dahulu sebelum mengirim pesanan.', 'warning');
+        return;
+      }
+      setSendOrderError('');
+      setIsSendOrderOpen(true);
+      return;
+    }
+
+    setPaymentMethod('cash');
+    setAmountPaid(String(totalAmount));
+    setCheckoutError('');
     setIsCheckoutOpen(true);
   };
 
+  const handleSendOrder = async () => {
+    if (processing) return;
+
+    if (!selectedTable) {
+      setSendOrderError('Pilih meja terlebih dahulu sebelum mengirim pesanan.');
+      return;
+    }
+
+    // Tanpa field payment: pelayan tidak boleh memproses pembayaran.
+    const payload = {
+      order_type: 'dine_in',
+      table_id: selectedTable.id,
+      customer_name: customerName || 'Tamu Meja',
+      items: cartItems.map((item) => ({
+        menu_id: item.id,
+        quantity: item.quantity,
+        notes: item.notes || null,
+      })),
+    };
+
+    setProcessing(true);
+    setSendOrderError('');
+
+    const orderSnapshot = {
+      items: [...cartItems],
+      subtotal,
+      taxAmount,
+      totalAmount,
+    };
+
+    try {
+      const res = await api.post('/v1/orders', payload);
+      if (res.data?.success) {
+        setCompletedOrder(res.data.data);
+        setIsSendOrderOpen(false);
+        setIsReceiptOpen(true);
+        clearCart();
+        fetchData();
+      }
+    } catch (err) {
+      if (err.response) {
+        setSendOrderError(
+          err.response.data?.message || 'Pesanan gagal dikirim. Silakan coba lagi.'
+        );
+        fetchData();
+        return;
+      }
+
+      // Fallback preview jika server tidak dapat dijangkau.
+      const mockInvoice =
+        'INV-' +
+        new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+        '-' +
+        Math.floor(1000 + Math.random() * 9000);
+      setCompletedOrder({
+        order_number: mockInvoice,
+        customer_name: customerName || 'Tamu Meja',
+        order_type: 'dine_in',
+        created_at: new Date().toISOString(),
+        table: selectedTable,
+        items: orderSnapshot.items,
+        subtotal: orderSnapshot.subtotal,
+        tax_amount: orderSnapshot.taxAmount,
+        total_amount: orderSnapshot.totalAmount,
+        payment: null,
+      });
+      setIsSendOrderOpen(false);
+      setIsReceiptOpen(true);
+      clearCart();
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleProcessPayment = async () => {
-    const paidNum = Number(amountPaid) || totalAmount;
-    if (paidNum < totalAmount) {
-      alert('Nominal uang diterima kurang dari total tagihan!');
+    if (processing) return;
+
+    const paidNum = paymentMethod === 'cash' ? Number(amountPaid) || 0 : totalAmount;
+
+    if (paymentMethod === 'cash' && paidNum < totalAmount) {
+      setCheckoutError('Nominal uang diterima kurang dari total tagihan.');
       return;
     }
 
@@ -141,6 +381,18 @@ export default function PosPage() {
       },
     };
 
+    setProcessing(true);
+    setCheckoutError('');
+
+    // Simpan snapshot untuk fallback struk saat offline.
+    const orderSnapshot = {
+      items: [...cartItems],
+      subtotal,
+      taxAmount,
+      totalAmount,
+      paidNum,
+    };
+
     try {
       const res = await api.post('/v1/orders', payload);
       if (res.data?.success) {
@@ -148,385 +400,369 @@ export default function PosPage() {
         setIsCheckoutOpen(false);
         setIsReceiptOpen(true);
         clearCart();
+        fetchData();
       }
     } catch (err) {
-      // Fallback preview receipt jika offline
-      const mockInvoice = 'INV-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(1000 + Math.random() * 9000);
+      if (err.response) {
+        setCheckoutError(
+          err.response.data?.message || 'Pembayaran gagal diproses. Silakan coba lagi.'
+        );
+        // Segarkan stok/ketersediaan menu agar badge di katalog ikut terbarui.
+        fetchData();
+        return;
+      }
+
+      // Fallback preview receipt jika server tidak dapat dijangkau.
+      const mockInvoice =
+        'INV-' +
+        new Date().toISOString().slice(0, 10).replace(/-/g, '') +
+        '-' +
+        Math.floor(1000 + Math.random() * 9000);
       const mockResult = {
         order_number: mockInvoice,
         customer_name: customerName || 'Pelanggan Walk-In',
         order_type: orderType,
         created_at: new Date().toISOString(),
         table: selectedTable,
-        items: [...cartItems],
-        subtotal,
-        tax_amount: taxAmount,
-        total_amount: totalAmount,
+        items: orderSnapshot.items,
+        subtotal: orderSnapshot.subtotal,
+        tax_amount: orderSnapshot.taxAmount,
+        total_amount: orderSnapshot.totalAmount,
         payment: {
           payment_method: paymentMethod,
-          amount_paid: paidNum,
-          change_amount: Math.max(0, paidNum - totalAmount),
+          amount_paid: orderSnapshot.paidNum,
+          change_amount: Math.max(0, orderSnapshot.paidNum - orderSnapshot.totalAmount),
         },
       };
       setCompletedOrder(mockResult);
       setIsCheckoutOpen(false);
       setIsReceiptOpen(true);
       clearCart();
+    } finally {
+      setProcessing(false);
     }
   };
 
+  const hasActiveFilter =
+    activeCategory !== 'all' || searchQuery.trim().length > 0 || showAvailableOnly;
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-7rem)]">
+    <div className="flex h-[calc(100dvh-6rem)] flex-col gap-4 lg:h-[calc(100dvh-7rem)] lg:flex-row lg:gap-6">
       {/* Kiri: Katalog Menu & Filter */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white rounded-2xl border border-slate-200 p-5 overflow-hidden">
-        {/* Search & Category Tabs */}
-        <div className="space-y-4 mb-4">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari kopi, makanan, cemilan..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-amber-500 focus:bg-white transition-all"
-            />
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="shrink-0 space-y-3 border-b border-slate-100 p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                  <LayoutGrid className="h-4.5 w-4.5 text-amber-500" />
+                  Katalog Menu
+                </h2>
+                {isWaiter && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700"
+                    title="Pesanan langsung dikirim ke dapur tanpa pembayaran"
+                  >
+                    <Send className="h-3 w-3" />
+                    Mode Pelayan
+                  </span>
+                )}
+              </div>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {isWaiter
+                  ? 'Pilih menu, tentukan meja, lalu kirim pesanan ke dapur.'
+                  : `${filteredMenus.length} menu ditampilkan` +
+                    (searchQuery.trim() ? ` untuk “${searchQuery.trim()}”` : '')}
+              </p>
+            </div>
+
+            <div className="hidden items-center gap-2 text-[10px] font-semibold text-slate-400 sm:flex">
+              <span className="inline-flex items-center gap-1">
+                <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_CLASSES.emerald}`} />
+                Tersedia
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_CLASSES.amber}`} />
+                Stok menipis
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT_CLASSES.rose}`} />
+                Habis
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${String(activeCategory) === String(cat.id)
-                  ? 'bg-amber-500 text-slate-950 shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+          <SearchBox
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            menus={menus}
+            categories={categories}
+            onSelectMenu={handleAddToCart}
+            onSelectCategory={handleSelectCategory}
+            inputRef={searchInputRef}
+          />
+
+          <div className="flex items-center gap-2">
+            <div className="scrollbar-none flex flex-1 gap-2 overflow-x-auto pb-1">
+              {categories.map((cat) => {
+                const count =
+                  cat.id === 'all'
+                    ? menus.length
+                    : menus.filter((menu) => String(menu.category_id) === String(cat.id)).length;
+
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setActiveCategory(cat.id)}
+                    aria-pressed={String(activeCategory) === String(cat.id)}
+                    className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                      String(activeCategory) === String(cat.id)
+                        ? 'bg-brand-700 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {cat.name}
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                        String(activeCategory) === String(cat.id)
+                          ? 'bg-white/20 text-white'
+                          : 'bg-white text-slate-400'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowAvailableOnly((previous) => !previous)}
+              aria-pressed={showAvailableOnly}
+              aria-label={showAvailableOnly ? 'Tampilkan semua menu' : 'Tampilkan hanya menu tersedia'}
+              title={showAvailableOnly ? 'Tampilkan semua menu' : 'Tampilkan hanya menu tersedia'}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                showAvailableOnly
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Hanya tersedia</span>
+            </button>
           </div>
         </div>
 
         {/* Menu Cards Grid */}
-        <div className="flex-1 overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5">
-            {filteredMenus.map((menu) => (
-              <div
-                key={menu.id}
-                onClick={() => addToCart(menu)}
-                className="group cursor-pointer bg-slate-50 hover:bg-amber-50/40 border border-slate-200 hover:border-amber-400 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-150 shadow-2xs hover:shadow-sm"
-              >
-                <div>
-                  <div className="w-full h-24 bg-slate-200 rounded-lg mb-2.5 overflow-hidden flex items-center justify-center text-slate-400">
-                    <MenuThumbnail
-                      menu={menu}
-                      categories={categories}
-                      iconClassName="w-8 h-8 text-slate-400 group-hover:scale-110 transition-transform"
-                    />
-                  </div>
-                  <h4 className="font-semibold text-slate-800 text-xs line-clamp-1 group-hover:text-amber-800">
-                    {menu.name}
-                  </h4>
-                  <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                    {menu.description || 'Pilihan menu lezat'}
-                  </p>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between pt-2 border-t border-slate-200/60">
-                  <span className="font-bold text-xs text-slate-900">
-                    {formatCurrency(menu.price)}
-                  </span>
-                  <div className="w-6 h-6 rounded-lg bg-amber-500 group-hover:bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-xs shadow-xs">
-                    <Plus className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Kanan: Keranjang & Panel Transaksi */}
-      <div className="w-full lg:w-96 bg-white rounded-2xl border border-slate-200 flex flex-col p-5 shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-amber-500" />
-            <h3 className="font-bold text-slate-900 text-base">Keranjang Pesanan</h3>
-          </div>
-          {cartItems.length > 0 && (
-            <button
-              onClick={clearCart}
-              className="text-xs text-rose-500 hover:text-rose-600 font-semibold"
-            >
-              Kosongkan
-            </button>
-          )}
-        </div>
-
-        {/* Setting Pesanan: Tipe & Meja */}
-        <div className="py-3 border-b border-slate-100 space-y-2.5">
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setOrderType('dine_in')}
-              className={`py-1.5 rounded-xl text-xs font-bold transition-all ${orderType === 'dine_in'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-            >
-              Dine-In (Makan di Tempat)
-            </button>
-            <button
-              onClick={() => {
-                setOrderType('takeaway');
-                setSelectedTable(null);
-              }}
-              className={`py-1.5 rounded-xl text-xs font-bold transition-all ${orderType === 'takeaway'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-            >
-              Takeaway (Bungkus)
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Nama Pelanggan (opsional)"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-amber-500"
-            />
-
-            {orderType === 'dine_in' && (
-              <select
-                value={selectedTable?.id || ''}
-                onChange={(e) => {
-                  const tbl = tables.find((t) => String(t.id) === e.target.value);
-                  setSelectedTable(tbl || null);
-                }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-semibold focus:outline-none focus:border-amber-500"
-              >
-                <option value="">Pilih Meja</option>
-                {tables.map((t) => (
-                  <option key={t.id} value={t.id} disabled={t.status === 'occupied'}>
-                    {t.table_number} {t.status === 'occupied' ? '(Terisi)' : ''}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        </div>
-
-        {/* List Keranjang Item */}
-        <div className="flex-1 overflow-y-auto py-3 space-y-3">
-          {cartItems.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 text-center py-8">
-              <ShoppingBag className="w-10 h-10 mb-2 stroke-[1.5]" />
-              <p className="text-xs">Belum ada item dipilih.</p>
-              <p className="text-[11px] text-slate-400">Klik menu di sebelah kiri untuk menambah.</p>
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-28 sm:p-5 lg:pb-5">
+          {filteredMenus.length === 0 ? (
+            <div className="flex h-full min-h-64 flex-col items-center justify-center px-6 text-center">
+              <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <Search className="h-7 w-7" />
+              </span>
+              <h3 className="text-sm font-bold text-slate-700">Menu tidak ditemukan</h3>
+              <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-400">
+                Coba kata kunci lain atau reset filter untuk melihat semua menu.
+              </p>
+              {hasActiveFilter && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="mt-4 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 transition-colors hover:bg-amber-400"
+                >
+                  Reset filter
+                </button>
+              )}
             </div>
           ) : (
-            cartItems.map((item) => (
-              <div key={item.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h5 className="font-semibold text-xs text-slate-800">{item.name}</h5>
-                    <span className="text-[11px] text-slate-500">{formatCurrency(item.price)}</span>
-                  </div>
-                  <span className="font-bold text-xs text-slate-900">{formatCurrency(item.subtotal)}</span>
-                </div>
-
-                <div className="flex items-center justify-between pt-1">
-                  <input
-                    type="text"
-                    value={item.notes || ''}
-                    onChange={(e) => updateItemNotes(item.id, e.target.value)}
-                    placeholder="Catatan (cth: Less Ice)"
-                    className="flex-1 mr-2 text-[11px] bg-white border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-amber-400"
-                  />
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-xs font-bold w-5 text-center">{item.quantity}</span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))' }}
+            >
+              {filteredMenus.map((menu) => (
+                <ProductCard
+                  key={menu.id}
+                  menu={menu}
+                  categories={categories}
+                  quantityInCart={cartQuantityById[menu.id] || 0}
+                  onAdd={handleAddToCart}
+                />
+              ))}
+            </div>
           )}
         </div>
+      </section>
 
-        {/* Ringkasan Biaya & Checkout */}
-        <div className="pt-3 border-t border-slate-100 space-y-2">
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>Pajak Restoran (10%)</span>
-            <span>{formatCurrency(taxAmount)}</span>
-          </div>
-          <div className="flex justify-between text-sm font-bold text-slate-900 pt-1 border-t border-slate-100">
-            <span>Total Tagihan</span>
-            <span className="text-amber-600 text-base">{formatCurrency(totalAmount)}</span>
-          </div>
+      {/* Kanan: Keranjang & Panel Transaksi (desktop) */}
+      <aside
+        className={`hidden shrink-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-[width] duration-200 lg:flex lg:flex-col xl:p-5 ${
+          isCartExpanded ? 'lg:w-[30rem] xl:w-[33rem]' : 'lg:w-[23rem] xl:w-[25rem]'
+        }`}
+      >
+        <CartPanel
+          cartItems={cartItems}
+          categories={categories}
+          subtotal={subtotal}
+          taxAmount={taxAmount}
+          totalAmount={totalAmount}
+          orderType={effectiveOrderType}
+          setOrderType={setOrderType}
+          selectedTable={selectedTable}
+          setSelectedTable={setSelectedTable}
+          tables={tables}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          onUpdateQuantity={handleUpdateQuantity}
+          onUpdateNotes={updateItemNotes}
+          onRemove={removeFromCart}
+          onClear={clearCart}
+          onCheckout={handleOpenCheckout}
+          isExpanded={isCartExpanded}
+          onToggleExpand={() => setIsCartExpanded((previous) => !previous)}
+          showExpandToggle
+          isWaiter={isWaiter}
+        />
+      </aside>
 
+      {/* Mobile: bar ringkasan + bottom sheet keranjang */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-3 py-2.5 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <ShoppingBag className="h-5 w-5" />
+            {itemCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-extrabold text-slate-950">
+                {itemCount}
+              </span>
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              {itemCount > 0 ? `${itemCount} item` : 'Keranjang kosong'} · Total
+            </p>
+            <p className="truncate text-sm font-extrabold text-slate-900">
+              {formatCurrency(totalAmount)}
+            </p>
+          </div>
           <button
-            onClick={handleOpenCheckout}
-            disabled={cartItems.length === 0}
-            className="w-full mt-2 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow-md transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            type="button"
+            onClick={() => setIsMobileCartOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-slate-800"
           >
-            <span>Bayar Sekarang</span>
+            Lihat Keranjang
+            <ChevronUp className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Modal Checkout Pembayaran */}
-      {isCheckoutOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="font-bold text-lg text-slate-800">Proses Pembayaran</h3>
-              <button
-                onClick={() => setIsCheckoutOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="my-5 text-center">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Total yang Harus Dibayar</p>
-              <p className="text-3xl font-extrabold text-amber-600 mt-1">{formatCurrency(totalAmount)}</p>
-            </div>
-
-            {/* Metode Pembayaran */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">Pilih Metode</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('cash')}
-                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'cash'
-                      ? 'border-amber-500 bg-amber-50/50 text-amber-800'
-                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                      }`}
-                  >
-                    <DollarSign className="w-5 h-5 mx-auto mb-1 text-emerald-600" />
-                    Tunai
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('qris')}
-                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'qris'
-                      ? 'border-amber-500 bg-amber-50/50 text-amber-800'
-                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                      }`}
-                  >
-                    <QrCode className="w-5 h-5 mx-auto mb-1 text-slate-800" />
-                    QRIS
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('transfer')}
-                    className={`p-3 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'transfer'
-                      ? 'border-amber-500 bg-amber-50/50 text-amber-800'
-                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                      }`}
-                  >
-                    <CreditCard className="w-5 h-5 mx-auto mb-1 text-blue-600" />
-                    Transfer
-                  </button>
-                </div>
-              </div>
-
-              {paymentMethod === 'cash' && (
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-600">Nominal Uang Diterima</label>
-                  <input
-                    type="number"
-                    value={amountPaid}
-                    onChange={(e) => setAmountPaid(e.target.value)}
-                    placeholder="Contoh: 50000"
-                    className="w-full p-2.5 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-amber-500"
-                  />
-                  <div className="flex gap-1.5 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setAmountPaid(totalAmount)}
-                      className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-700"
-                    >
-                      Uang Pas
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAmountPaid(50000)}
-                      className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-700"
-                    >
-                      50.000
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAmountPaid(100000)}
-                      className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-700"
-                    >
-                      100.000
-                    </button>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl flex justify-between text-xs mt-2">
-                    <span className="text-slate-500">Kembalian:</span>
-                    <span className="font-bold text-slate-900 text-sm">
-                      {formatCurrency(Math.max(0, (Number(amountPaid) || 0) - totalAmount))}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {paymentMethod === 'qris' && (
-                <div className="text-center p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <div className="w-36 h-36 bg-white mx-auto p-2 border border-slate-300 rounded-lg flex items-center justify-center">
-                    <QrCode className="w-28 h-28 text-slate-900" />
-                  </div>
-                  <p className="text-xs text-slate-500 mt-2">Scan QRIS Nasional dengan GoPay/OVO/BCA</p>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleProcessPayment}
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm shadow-md transition-all mt-4"
-              >
-                Konfirmasi & Cetak Struk
-              </button>
-            </div>
+      {isMobileCartOpen && (
+        <>
+          <div
+            className="animate-pos-fade fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden"
+            onClick={() => setIsMobileCartOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Keranjang pesanan"
+            className="animate-pos-sheet fixed inset-x-0 bottom-0 z-50 flex h-[88dvh] flex-col rounded-t-3xl bg-white p-4 shadow-2xl lg:hidden"
+          >
+            <div className="mx-auto mb-2 h-1.5 w-10 shrink-0 rounded-full bg-slate-200" />
+            <CartPanel
+              cartItems={cartItems}
+              categories={categories}
+              subtotal={subtotal}
+              taxAmount={taxAmount}
+              totalAmount={totalAmount}
+              orderType={effectiveOrderType}
+              setOrderType={setOrderType}
+              selectedTable={selectedTable}
+              setSelectedTable={setSelectedTable}
+              tables={tables}
+              customerName={customerName}
+              setCustomerName={setCustomerName}
+              onUpdateQuantity={handleUpdateQuantity}
+              onUpdateNotes={updateItemNotes}
+              onRemove={removeFromCart}
+              onClear={clearCart}
+              onCheckout={() => {
+                setIsMobileCartOpen(false);
+                handleOpenCheckout();
+              }}
+              onClose={() => setIsMobileCartOpen(false)}
+              isWaiter={isWaiter}
+            />
           </div>
-        </div>
+        </>
       )}
+
+      <CheckoutDialog
+        open={isCheckoutOpen}
+        onClose={() => {
+          if (!processing) {
+            setIsCheckoutOpen(false);
+            setCheckoutError('');
+          }
+        }}
+        items={cartItems}
+        subtotal={subtotal}
+        taxAmount={taxAmount}
+        totalAmount={totalAmount}
+        orderType={orderType}
+        selectedTable={selectedTable}
+        customerName={customerName}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+        amountPaid={amountPaid}
+        setAmountPaid={setAmountPaid}
+        onConfirm={handleProcessPayment}
+        processing={processing}
+        errorMessage={checkoutError}
+      />
+
+      <SendOrderDialog
+        open={isSendOrderOpen}
+        onClose={() => {
+          if (!processing) {
+            setIsSendOrderOpen(false);
+            setSendOrderError('');
+          }
+        }}
+        items={cartItems}
+        subtotal={subtotal}
+        taxAmount={taxAmount}
+        totalAmount={totalAmount}
+        selectedTable={selectedTable}
+        customerName={customerName}
+        onConfirm={handleSendOrder}
+        processing={processing}
+        errorMessage={sendOrderError}
+      />
 
       {/* Modal Preview Struk Pembayaran */}
       {isReceiptOpen && completedOrder && (
-        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 font-mono text-xs">
-            <div className="text-center pb-4 border-b border-dashed border-slate-300">
-              <h3 className="font-bold text-base text-slate-900">AROMA KOPI & CAFE</h3>
-              <p className="text-slate-500 text-[10px]">Jl. Grafika No. 1, Yogyakarta</p>
-              <p className="text-slate-500 text-[10px]">Telp: 0812-3456-7890</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={isWaiter ? 'Konfirmasi pesanan terkirim' : 'Struk pembayaran'}
+            className="max-h-[92vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 font-mono text-xs shadow-2xl"
+          >
+            {isWaiter && (
+              <div className="mb-4 flex items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 font-sans text-[11px] font-bold text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" />
+                Pesanan Terkirim ke Dapur
+              </div>
+            )}
+
+            <div className="border-b border-dashed border-slate-300 pb-4 text-center">
+              <h3 className="text-base font-bold text-slate-900">AROMA KOPI &amp; CAFE</h3>
+              <p className="text-[10px] text-slate-500">Jl. Grafika No. 1, Yogyakarta</p>
+              <p className="text-[10px] text-slate-500">Telp: 0812-3456-7890</p>
             </div>
 
-            <div className="py-3 border-b border-dashed border-slate-300 space-y-1 text-[11px] text-slate-600">
+            <div className="space-y-1 border-b border-dashed border-slate-300 py-3 text-[11px] text-slate-600">
               <div className="flex justify-between">
                 <span>No: {completedOrder.order_number}</span>
                 <span>{completedOrder.order_type === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY'}</span>
@@ -540,22 +776,22 @@ export default function PosPage() {
               </div>
             </div>
 
-            <div className="py-3 border-b border-dashed border-slate-300 space-y-2">
-              {completedOrder.items?.map((it, idx) => (
-                <div key={idx} className="flex justify-between text-[11px]">
+            <div className="space-y-2 border-b border-dashed border-slate-300 py-3">
+              {completedOrder.items?.map((item, index) => (
+                <div key={index} className="flex justify-between text-[11px]">
                   <div>
-                    <p className="font-semibold">{it.name || it.menu?.name}</p>
+                    <p className="font-semibold">{item.name || item.menu?.name}</p>
                     <span className="text-[10px] text-slate-500">
-                      {it.quantity} x {formatCurrency(it.unit_price || it.price)}
+                      {item.quantity} x {formatCurrency(item.unit_price || item.price)}
                     </span>
-                    {it.notes && <p className="text-[9px] text-amber-700 italic">*{it.notes}</p>}
+                    {item.notes && <p className="text-[9px] italic text-amber-700">*{item.notes}</p>}
                   </div>
-                  <span className="font-semibold">{formatCurrency(it.subtotal)}</span>
+                  <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
                 </div>
               ))}
             </div>
 
-            <div className="py-3 border-b border-dashed border-slate-300 space-y-1 text-[11px]">
+            <div className="space-y-1 border-b border-dashed border-slate-300 py-3 text-[11px]">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
                 <span>{formatCurrency(completedOrder.subtotal)}</span>
@@ -564,45 +800,90 @@ export default function PosPage() {
                 <span>Pajak (10%):</span>
                 <span>{formatCurrency(completedOrder.tax_amount)}</span>
               </div>
-              <div className="flex justify-between font-bold text-sm text-slate-900 pt-1">
+              <div className="flex justify-between pt-1 text-sm font-bold text-slate-900">
                 <span>TOTAL:</span>
                 <span>{formatCurrency(completedOrder.total_amount)}</span>
               </div>
-              <div className="flex justify-between pt-1">
-                <span>Metode:</span>
-                <span className="uppercase">{completedOrder.payment?.payment_method}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Bayar:</span>
-                <span>{formatCurrency(completedOrder.payment?.amount_paid)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Kembali:</span>
-                <span>{formatCurrency(completedOrder.payment?.change_amount)}</span>
-              </div>
+
+              {completedOrder.payment ? (
+                <>
+                  <div className="flex justify-between pt-1">
+                    <span>Metode:</span>
+                    <span className="uppercase">{completedOrder.payment?.payment_method}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Bayar:</span>
+                    <span>{formatCurrency(completedOrder.payment?.amount_paid)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Kembali:</span>
+                    <span>{formatCurrency(completedOrder.payment?.change_amount)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-center font-sans text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                  Belum dibayar · Bayar di kasir
+                </div>
+              )}
             </div>
 
-            <div className="text-center pt-4 text-[10px] text-slate-500">
+            <div className="pt-4 text-center text-[10px] text-slate-500">
               <p>Terima kasih atas kunjungan Anda!</p>
               <p>Wi-Fi: AromaCafe / Pass: kopienak123</p>
             </div>
 
             <div className="mt-5 flex gap-2 font-sans">
+              {!isWaiter && (
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  <span>Cetak Struk</span>
+                </button>
+              )}
               <button
-                onClick={() => window.print()}
-                className="flex-1 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-800"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Cetak Struk</span>
-              </button>
-              <button
+                type="button"
                 onClick={() => setIsReceiptOpen(false)}
-                className="px-4 py-2.5 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50"
+                className={`rounded-xl px-4 py-2.5 text-xs font-bold ${
+                  isWaiter
+                    ? 'flex-1 bg-slate-900 text-white hover:bg-slate-800'
+                    : 'border border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
               >
-                Tutup
+                {isWaiter ? 'Buat Pesanan Baru' : 'Tutup'}
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast feedback */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`animate-pos-toast fixed right-4 top-20 z-[60] flex max-w-xs items-start gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold shadow-lg ${
+            toast.tone === 'warning'
+              ? 'border-amber-200 bg-amber-50 text-amber-800'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          }`}
+        >
+          {toast.tone === 'warning' ? (
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          ) : (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          )}
+          <span>{toast.message}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            aria-label="Tutup notifikasi"
+            className="ml-1 rounded p-0.5 opacity-60 hover:opacity-100"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>

@@ -20,12 +20,14 @@ class Menu extends Model
         'cost_price',
         'image_path',
         'is_available',
+        'stock',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
         'is_available' => 'boolean',
+        'stock' => 'integer',
     ];
 
     public function category(): BelongsTo

@@ -1,139 +1,160 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle2, XCircle, Search, Coffee, UtensilsCrossed, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Edit2,
+  LayoutGrid,
+  List,
+  Loader2,
+  Plus,
+  Search,
+  SearchX,
+  Trash2,
+  UtensilsCrossed,
+  X,
+  XCircle,
+} from 'lucide-react';
 import api from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
-import { getMenuImage } from '../../utils/menuImages';
 import MenuThumbnail from '../../components/MenuThumbnail';
-
-const readFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+import MenuCard from './MenuCard';
+import MenuFormDialog from './MenuFormDialog';
+import ConfirmDialog from './ConfirmDialog';
+import { getMargin, getStockState } from './menuUtils';
 
 const sampleMenus = [
-  { id: 1, name: 'Espresso Single', category: { name: 'Coffee' }, category_id: 1, price: 18000, cost_price: 7000, is_available: true, description: 'Arabika single shot' },
-  { id: 2, name: 'Iced Americano', category: { name: 'Coffee' }, category_id: 1, price: 22000, cost_price: 8000, is_available: true, description: 'Espresso & es segar' },
-  { id: 3, name: 'Caramel Macchiato', category: { name: 'Coffee' }, category_id: 1, price: 28000, cost_price: 12000, is_available: true, description: 'Espresso, susu, saus karamel' },
-  { id: 4, name: 'Kopi Susu Gula Aren', category: { name: 'Coffee' }, category_id: 1, price: 24000, cost_price: 9000, is_available: true, description: 'Aren organik creamy' },
-  { id: 5, name: 'Matcha Latte', category: { name: 'Non-Coffee' }, category_id: 2, price: 27000, cost_price: 11000, is_available: true, description: 'Matcha murni Uji Jepang' },
-  { id: 6, name: 'Nasi Goreng Kampung', category: { name: 'Main Course' }, category_id: 3, price: 32000, cost_price: 14000, is_available: true, description: 'Telur ceplok & ayam' },
+  { id: 1, name: 'Espresso Single', category: { name: 'Coffee' }, category_id: 1, price: 18000, cost_price: 7000, stock: 40, is_available: true, description: 'Arabika single shot' },
+  { id: 2, name: 'Iced Americano', category: { name: 'Coffee' }, category_id: 1, price: 22000, cost_price: 8000, stock: 35, is_available: true, description: 'Espresso & es segar' },
+  { id: 3, name: 'Caramel Macchiato', category: { name: 'Coffee' }, category_id: 1, price: 28000, cost_price: 12000, stock: 25, is_available: true, description: 'Espresso, susu, saus karamel' },
+  { id: 4, name: 'Kopi Susu Gula Aren', category: { name: 'Coffee' }, category_id: 1, price: 24000, cost_price: 9000, stock: 30, is_available: true, description: 'Aren organik creamy' },
+  { id: 5, name: 'Matcha Latte', category: { name: 'Non-Coffee' }, category_id: 2, price: 27000, cost_price: 11000, stock: 18, is_available: true, description: 'Matcha murni Uji Jepang' },
+  { id: 6, name: 'Nasi Goreng Kampung', category: { name: 'Main Course' }, category_id: 3, price: 32000, cost_price: 14000, stock: 15, is_available: true, description: 'Telur ceplok & ayam' },
 ];
+
+const defaultCategories = [
+  { id: 1, name: 'Coffee' },
+  { id: 2, name: 'Non-Coffee' },
+  { id: 3, name: 'Main Course' },
+  { id: 4, name: 'Snacks' },
+];
+
+const STOCK_TEXT_TONE = {
+  success: 'text-emerald-600',
+  warning: 'text-amber-600',
+  danger: 'text-rose-600',
+  neutral: 'text-slate-400',
+};
 
 export default function MenuManagement() {
   const [menus, setMenus] = useState(sampleMenus);
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Coffee' },
-    { id: 2, name: 'Non-Coffee' },
-    { id: 3, name: 'Main Course' },
-    { id: 4, name: 'Snacks' },
-  ]);
+  const [categories, setCategories] = useState(defaultCategories);
   const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [availability, setAvailability] = useState('all');
+  const [view, setView] = useState(() =>
+    localStorage.getItem('menu_view') === 'table' ? 'table' : 'grid'
+  );
+  const [formOpen, setFormOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-
-  // Form State
-  const [formData, setFormData] = useState({
-    name: '',
-    category_id: '1',
-    price: '',
-    cost_price: '',
-    description: '',
-    is_available: true,
-  });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const fetchMenus = async () => {
     try {
       const res = await api.get('/v1/menus');
-      if (res.data?.data?.length) setMenus(res.data.data);
-      const catRes = await api.get('/v1/categories');
-      if (catRes.data?.data?.length) setCategories(catRes.data.data);
-    } catch (e) {
-      console.warn('API error, using sample menu list:', e);
+      if (Array.isArray(res.data?.data)) setMenus(res.data.data);
+    } catch (error) {
+      console.warn('API menu tidak tersedia, menggunakan data contoh:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/v1/categories');
+      if (Array.isArray(res.data?.data) && res.data.data.length > 0) {
+        setCategories(res.data.data);
+      }
+    } catch (error) {
+      console.warn('API kategori tidak tersedia, menggunakan data contoh:', error);
     }
   };
 
   useEffect(() => {
     fetchMenus();
+    fetchCategories();
   }, []);
 
-  const resetImageState = (preview = null) => {
-    setImageFile(null);
-    setImagePreview(preview);
+  useEffect(() => {
+    localStorage.setItem('menu_view', view);
+  }, [view]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 4500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const showToast = (type, message) => setToast({ id: Date.now(), type, message });
+
+  const categoryCounts = useMemo(() => {
+    const counts = {};
+    menus.forEach((menu) => {
+      const key = String(menu.category_id ?? '');
+      if (!key) return;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [menus]);
+
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const filtered = useMemo(
+    () =>
+      menus.filter((menu) => {
+        const matchesSearch =
+          !normalizedSearch ||
+          [menu.name, menu.description].some((value) =>
+            String(value || '').toLowerCase().includes(normalizedSearch)
+          );
+
+        const matchesCategory =
+          activeCategory === 'all' || String(menu.category_id) === activeCategory;
+
+        const matchesAvailability =
+          availability === 'all' ||
+          (availability === 'available' ? menu.is_available : !menu.is_available);
+
+        return matchesSearch && matchesCategory && matchesAvailability;
+      }),
+    [menus, normalizedSearch, activeCategory, availability]
+  );
+
+  const hasActiveFilters = Boolean(search) || activeCategory !== 'all' || availability !== 'all';
+
+  const resetFilters = () => {
+    setSearch('');
+    setActiveCategory('all');
+    setAvailability('all');
   };
 
   const handleOpenAdd = () => {
     setEditingMenu(null);
-    resetImageState(null);
-    setFormData({
-      name: '',
-      category_id: categories[0]?.id || '1',
-      price: '',
-      cost_price: '',
-      description: '',
-      is_available: true,
-    });
-    setIsModalOpen(true);
+    setFormOpen(true);
   };
 
   const handleOpenEdit = (menu) => {
     setEditingMenu(menu);
-    resetImageState(getMenuImage(menu, categories));
-    setFormData({
-      name: menu.name,
-      category_id: menu.category_id || '1',
-      price: menu.price,
-      cost_price: menu.cost_price || 0,
-      description: menu.description || '',
-      is_available: menu.is_available,
-    });
-    setIsModalOpen(true);
+    setFormOpen(true);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      alert('Format foto harus JPG, PNG, atau WEBP.');
-      e.target.value = '';
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Ukuran foto maksimal 2MB.');
-      e.target.value = '';
-      return;
-    }
-
-    setImageFile(file);
-
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result);
-    reader.readAsDataURL(file);
+  const handleCloseForm = () => {
+    setFormOpen(false);
+    setEditingMenu(null);
   };
 
-  const handleSaveMenu = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      ...formData,
-      is_available: formData.is_available ? 1 : 0,
-    };
-
-    if (imageFile) {
-      try {
-        payload.image_base64 = await readFileAsDataUrl(imageFile);
-      } catch {
-        alert('Gagal membaca file foto. Silakan pilih ulang.');
-        return;
-      }
-    }
-
+  const handleSaveMenu = async (payload, meta = {}) => {
     try {
       if (editingMenu) {
         await api.post(`/v1/menus/${editingMenu.id}`, payload);
@@ -141,278 +162,499 @@ export default function MenuManagement() {
         await api.post('/v1/menus', payload);
       }
       await fetchMenus();
-    } catch (err) {
-      if (err.response) {
-        alert(err.response.data?.message || 'Gagal menyimpan menu. Periksa kembali data Anda.');
-        return;
-      }
+      showToast(
+        'success',
+        editingMenu ? 'Menu berhasil diperbarui.' : 'Menu baru berhasil ditambahkan.'
+      );
+    } catch (error) {
+      // Error dari server diteruskan ke form agar dialog tetap terbuka.
+      if (error.response) throw error;
 
-      // Local fallback saat API/offline
-      const localData = { ...formData, image_path: imagePreview };
+      // Fallback lokal saat backend tidak terjangkau (mode demo).
+      const category = categories.find(
+        (item) => String(item.id) === String(payload.category_id)
+      );
+      const localMenu = {
+        ...payload,
+        is_available: Boolean(payload.is_available),
+        image_path: meta.preview || editingMenu?.image_path || null,
+        category: category
+          ? { id: category.id, name: category.name }
+          : { name: 'Umum' },
+      };
+
       if (editingMenu) {
-        setMenus(menus.map(m => m.id === editingMenu.id ? { ...m, ...localData } : m));
+        setMenus((previous) =>
+          previous.map((menu) =>
+            menu.id === editingMenu.id ? { ...menu, ...localMenu } : menu
+          )
+        );
       } else {
-        const newId = Date.now();
-        const cat = categories.find(c => String(c.id) === String(formData.category_id));
-        setMenus([...menus, { id: newId, ...localData, category: { name: cat?.name || 'Umum' } }]);
+        setMenus((previous) => [{ id: Date.now(), ...localMenu }, ...previous]);
       }
+      showToast('success', 'Perubahan disimpan secara lokal (mode demo).');
     }
-    setIsModalOpen(false);
   };
 
   const handleToggle = async (menu) => {
+    setTogglingId(menu.id);
     try {
-      await api.patch(`/v1/menus/${menu.id}/toggle-availability`);
-    } catch (e) {
-      console.warn('API toggle failed:', e);
+      const response = await api.patch(`/v1/menus/${menu.id}/toggle-availability`);
+      const updated = response.data?.data;
+      setMenus((previous) =>
+        previous.map((item) =>
+          item.id === menu.id
+            ? { ...item, ...(updated || { is_available: !item.is_available }) }
+            : item
+        )
+      );
+      showToast('success', `Status "${menu.name}" diperbarui.`);
+    } catch (error) {
+      if (error.response) {
+        showToast(
+          'error',
+          error.response.data?.message || 'Gagal mengubah status ketersediaan menu.'
+        );
+      } else {
+        setMenus((previous) =>
+          previous.map((item) =>
+            item.id === menu.id ? { ...item, is_available: !item.is_available } : item
+          )
+        );
+        showToast('success', 'Status diperbarui secara lokal (mode demo).');
+      }
+    } finally {
+      setTogglingId(null);
     }
-    setMenus(menus.map(m => m.id === menu.id ? { ...m, is_available: !m.is_available } : m));
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Yakin ingin menghapus menu ini?')) return;
-    try {
-      await api.delete(`/v1/menus/${id}`);
-    } catch (e) {
-      console.warn('API delete failed:', e);
-    }
-    setMenus(menus.filter(m => m.id !== id));
-  };
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setDeleting(true);
 
-  const filtered = menus.filter(m =>
-    m.name.toLowerCase().includes(search.toLowerCase())
-  );
+    try {
+      await api.delete(`/v1/menus/${target.id}`);
+      setMenus((previous) => previous.filter((menu) => menu.id !== target.id));
+      showToast('success', `"${target.name}" berhasil dihapus.`);
+    } catch (error) {
+      if (error.response) {
+        showToast(
+          'error',
+          error.response.data?.message || 'Gagal menghapus menu. Silakan coba lagi.'
+        );
+      } else {
+        setMenus((previous) => previous.filter((menu) => menu.id !== target.id));
+        showToast('success', 'Menu dihapus secara lokal (mode demo).');
+      }
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <UtensilsCrossed className="w-5 h-5 text-amber-500" />
-            <span>Manajemen Menu & Harga</span>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <UtensilsCrossed className="h-5 w-5 text-amber-500" />
+            <span>Katalog Menu</span>
           </h2>
-          <p className="text-xs text-slate-500">Kelola daftar produk, harga modal, harga jual, dan status ketersediaan.</p>
+          <p className="text-xs text-slate-500">
+            Kelola foto, harga, stok, dan ketersediaan menu kafe.
+          </p>
         </div>
         <button
+          type="button"
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-2 shadow-xs transition-colors self-start"
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
         >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Menu Baru</span>
+          <Plus className="h-4 w-4" />
+          <span>Tambah Menu</span>
         </button>
       </div>
 
-      {/* Filter and Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari berdasarkan nama menu..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs focus:outline-none focus:border-amber-500"
-          />
-        </div>
-        <div className="text-xs text-slate-500">
-          Total: <strong className="text-slate-800">{filtered.length}</strong> menu terdaftar
-        </div>
-      </div>
-
-      {/* Menu Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
-              <tr>
-                <th className="p-4">Nama Menu</th>
-                <th className="p-4">Kategori</th>
-                <th className="p-4">Harga Pokok (HPP)</th>
-                <th className="p-4">Harga Jual</th>
-                <th className="p-4">Estimasi Margin</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filtered.map((menu) => {
-                const margin = Number(menu.price) - Number(menu.cost_price || 0);
-                const marginPercent = menu.price > 0 ? Math.round((margin / menu.price) * 100) : 0;
-                return (
-                  <tr key={menu.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
-                          <MenuThumbnail
-                            menu={menu}
-                            categories={categories}
-                            iconClassName="w-4 h-4 text-slate-400"
-                          />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-900">{menu.name}</div>
-                          <div className="text-[11px] text-slate-400 line-clamp-1">{menu.description || '-'}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                        {menu.category?.name || 'Umum'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-500">{formatCurrency(menu.cost_price || 0)}</td>
-                    <td className="p-4 font-bold text-slate-900">{formatCurrency(menu.price)}</td>
-                    <td className="p-4">
-                      <span className="text-emerald-700 font-semibold">
-                        +{formatCurrency(margin)} ({marginPercent}%)
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => handleToggle(menu)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${menu.is_available
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-rose-100 text-rose-800'
-                          }`}
-                      >
-                        {menu.is_available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
-                        <span>{menu.is_available ? 'Tersedia' : 'Habis'}</span>
-                      </button>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(menu)}
-                          className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(menu.id)}
-                          className="p-1.5 rounded-lg border border-slate-200 hover:bg-rose-50 text-rose-600"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal Tambah / Edit */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800 text-base">
-                {editingMenu ? 'Edit Menu Kafe' : 'Tambah Menu Baru'}
-              </h3>
+      {/* Toolbar: pencarian, kategori, status, tampilan */}
+      <section
+        aria-label="Filter katalog menu"
+        className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs sm:p-4"
+      >
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex-1 lg:max-w-md">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Cari nama atau deskripsi menu..."
+              aria-label="Cari menu"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-9 text-xs text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {search && (
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center"
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Hapus pencarian"
+                className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
               >
-                <X className="w-4 h-4" />
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={availability}
+              onChange={(event) => setAvailability(event.target.value)}
+              aria-label="Filter ketersediaan"
+              className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-colors focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-500/10"
+            >
+              <option value="all">Semua status</option>
+              <option value="available">Tersedia</option>
+              <option value="unavailable">Habis</option>
+            </select>
+
+            <div
+              className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5"
+              role="group"
+              aria-label="Pilih tampilan"
+            >
+              <button
+                type="button"
+                onClick={() => setView('grid')}
+                aria-pressed={view === 'grid'}
+                aria-label="Tampilan kartu"
+                title="Tampilan kartu"
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  view === 'grid'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('table')}
+                aria-pressed={view === 'table'}
+                aria-label="Tampilan tabel"
+                title="Tampilan tabel"
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  view === 'table'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <List className="h-4 w-4" />
               </button>
             </div>
+          </div>
+        </div>
 
-            <form onSubmit={handleSaveMenu} className="space-y-4 mt-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Nama Menu</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Contoh: Vanilla Latte"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Kategori</label>
-                <select
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Foto Menu</label>
-                <div className="flex items-center gap-3">
-                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Preview menu" className="w-full h-full object-cover" />
-                    ) : (
-                      <Coffee className="w-6 h-6 text-slate-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleImageChange}
-                      className="block w-full text-[11px] text-slate-500 file:mr-3 file:px-3 file:py-2 file:rounded-lg file:border-0 file:bg-amber-100 file:text-amber-800 file:font-semibold hover:file:bg-amber-200 file:cursor-pointer cursor-pointer"
-                    />
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      {imageFile ? imageFile.name : 'JPG, PNG, atau WEBP. Maksimal 2MB.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Harga Jual (Rp)</label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="25000"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Harga Pokok / HPP (Rp)</label>
-                  <input
-                    type="number"
-                    value={formData.cost_price}
-                    onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                    placeholder="10000"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Deskripsi Singkat</label>
-                <textarea
-                  rows="2"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Rincian rasa, topping, atau takaran..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="pt-2">
+        <div className="mt-3 border-t border-slate-100 pt-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Kategori
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-400">
+                Menampilkan <strong className="text-slate-700">{filtered.length}</strong> dari{' '}
+                {menus.length} menu
+              </span>
+              {hasActiveFilters && (
                 <button
-                  type="submit"
-                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors"
+                  type="button"
+                  onClick={resetFilters}
+                  className="text-[10px] font-bold text-amber-600 transition-colors hover:text-amber-700 hover:underline"
                 >
-                  Simpan Data Menu
+                  Reset
                 </button>
-              </div>
-            </form>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setActiveCategory('all')}
+              aria-pressed={activeCategory === 'all'}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                activeCategory === 'all'
+                  ? 'border-brand-700 bg-brand-700 text-white'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              Semua
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${
+                  activeCategory === 'all'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-slate-100 text-slate-500'
+                }`}
+              >
+                {menus.length}
+              </span>
+            </button>
+
+            {categories.map((category) => {
+              const count = categoryCounts[String(category.id)] || 0;
+              const active = activeCategory === String(category.id);
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => setActiveCategory(String(category.id))}
+                  aria-pressed={active}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-colors ${
+                    active
+                      ? 'border-brand-700 bg-brand-700 text-white'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {category.name}
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-extrabold ${
+                      active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Daftar menu */}
+      {view === 'grid' ? (
+        filtered.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((menu) => (
+              <MenuCard
+                key={menu.id}
+                menu={menu}
+                categories={categories}
+                onEdit={handleOpenEdit}
+                onDelete={setDeleteTarget}
+                onToggle={handleToggle}
+                toggling={togglingId === menu.id}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+              <SearchX className="h-6 w-6" />
+            </span>
+            <p className="text-sm font-bold text-slate-800">Menu tidak ditemukan</p>
+            <p className="max-w-sm text-xs text-slate-500">
+              Coba kata kunci lain atau ubah filter kategori dan status ketersediaan.
+            </p>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="mt-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Reset filter
+            </button>
+          </div>
+        )
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[860px] text-left text-xs">
+              <thead className="border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="px-4 py-3.5 font-bold">Menu</th>
+                  <th className="px-4 py-3.5 font-bold">Kategori</th>
+                  <th className="px-4 py-3.5 font-bold">HPP</th>
+                  <th className="px-4 py-3.5 font-bold">Harga Jual</th>
+                  <th className="px-4 py-3.5 font-bold">Margin</th>
+                  <th className="px-4 py-3.5 font-bold">Stok</th>
+                  <th className="px-4 py-3.5 font-bold">Status</th>
+                  <th className="px-4 py-3.5 text-right font-bold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center">
+                      <p className="text-sm font-semibold text-slate-600">
+                        Tidak ada menu yang cocok dengan filter.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={resetFilters}
+                        className="mt-2 text-xs font-bold text-amber-600 hover:underline"
+                      >
+                        Reset filter
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((menu) => {
+                    const margin = getMargin(menu);
+                    const stock = getStockState(menu);
+                    return (
+                      <tr key={menu.id} className="transition-colors hover:bg-slate-50/70">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                              <MenuThumbnail
+                                menu={menu}
+                                categories={categories}
+                                iconClassName="h-4 w-4 text-slate-400"
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-900">{menu.name}</p>
+                              <p className="line-clamp-1 text-[11px] text-slate-400">
+                                {menu.description || '-'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">
+                            {menu.category?.name || 'Umum'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500">
+                          {formatCurrency(menu.cost_price || 0)}
+                        </td>
+                        <td className="px-4 py-3 font-bold text-slate-900">
+                          {formatCurrency(menu.price)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="font-semibold text-emerald-700">
+                            +{formatCurrency(margin.margin)}
+                          </span>
+                          <span className="ml-1 text-[10px] text-slate-400">
+                            ({margin.percent}%)
+                          </span>
+                        </td>
+                        <td className={`px-4 py-3 font-semibold ${STOCK_TEXT_TONE[stock.tone]}`}>
+                          {stock.label}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleToggle(menu)}
+                            disabled={togglingId === menu.id}
+                            aria-pressed={Boolean(menu.is_available)}
+                            aria-label={`Ubah ketersediaan ${menu.name}`}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                              menu.is_available
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                            }`}
+                          >
+                            {togglingId === menu.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : menu.is_available ? (
+                              <CheckCircle2 className="h-3 w-3" />
+                            ) : (
+                              <XCircle className="h-3 w-3" />
+                            )}
+                            {menu.is_available ? 'Tersedia' : 'Habis'}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(menu)}
+                              aria-label={`Edit ${menu.name}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(menu)}
+                              aria-label={`Hapus ${menu.name}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-rose-600 transition-colors hover:border-rose-200 hover:bg-rose-50"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {formOpen && (
+        <MenuFormDialog
+          key={editingMenu?.id ?? 'new'}
+          menu={editingMenu}
+          categories={categories}
+          onClose={handleCloseForm}
+          onSave={handleSaveMenu}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Hapus menu ini?"
+          description={
+            <>
+              Menu{' '}
+              <strong className="font-bold text-slate-700">“{deleteTarget.name}”</strong>{' '}
+              akan dihapus permanen beserta fotonya. Tindakan ini tidak dapat dibatalkan.
+            </>
+          }
+          confirmLabel="Ya, hapus menu"
+          loading={deleting}
+          onCancel={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
+          onConfirm={confirmDelete}
+        />
+      )}
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="animate-pos-toast fixed bottom-4 right-4 z-[80] w-[min(22rem,calc(100vw-2rem))]"
+        >
+          <div
+            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl ${
+              toast.type === 'error' ? 'border-rose-200' : 'border-emerald-200'
+            }`}
+          >
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === 'error'
+                  ? 'bg-rose-100 text-rose-600'
+                  : 'bg-emerald-100 text-emerald-600'
+              }`}
+            >
+              {toast.type === 'error' ? (
+                <AlertCircle className="h-4 w-4" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+            </span>
+            <p className="flex-1 text-xs font-semibold leading-relaxed text-slate-700">
+              {toast.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              aria-label="Tutup notifikasi"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       )}

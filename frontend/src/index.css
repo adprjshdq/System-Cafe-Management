@@ -1,7 +1,159 @@
 @import "tailwindcss";
 
+@theme {
+  /* Identitas cokelat kopi untuk indikator aktif navigasi & pilihan. */
+  --color-brand-50: #faf5f0;
+  --color-brand-100: #f3e7da;
+  --color-brand-200: #e6cdb6;
+  --color-brand-300: #d5ad8b;
+  --color-brand-400: #c08761;
+  --color-brand-500: #a96a45;
+  --color-brand-600: #915336;
+  --color-brand-700: #77422d;
+  --color-brand-800: #613728;
+  --color-brand-900: #512f24;
+  --color-brand-950: #2c1811;
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  }
+}
+
+@layer utilities {
+  @keyframes pos-sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pos-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pos-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes auth-rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes kds-urgent-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 7px rgba(244, 63, 94, 0);
+    }
+  }
+
+  @keyframes kds-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes kds-bell {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    15% {
+      transform: rotate(14deg);
+    }
+    30% {
+      transform: rotate(-12deg);
+    }
+    45% {
+      transform: rotate(8deg);
+    }
+    60% {
+      transform: rotate(-4deg);
+    }
+    75% {
+      transform: rotate(0deg);
+    }
+  }
+
+  .animate-kds-urgent {
+    animation: kds-urgent-pulse 2s ease-out infinite;
+  }
+
+  .animate-kds-toast {
+    animation: kds-toast-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .animate-kds-bell {
+    animation: kds-bell 1.6s ease-in-out infinite;
+    transform-origin: top center;
+  }
+
+  @keyframes dialog-pop {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-dialog-pop {
+    animation: dialog-pop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .animate-auth-rise {
+    animation: auth-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-pos-sheet {
+    animation: pos-sheet-up 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .animate-pos-fade {
+    animation: pos-fade-in 0.18s ease-out;
+  }
+
+  .animate-pos-toast {
+    animation: pos-toast-in 0.18s ease-out;
+  }
+
+  /* Latar denah meja: garis grid halus seperti blueprint kafe. */
+  .floor-grid {
+    background-image:
+      linear-gradient(to right, rgba(148, 163, 184, 0.22) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.22) 1px, transparent 1px);
+    background-size: 22px 22px;
   }
 }

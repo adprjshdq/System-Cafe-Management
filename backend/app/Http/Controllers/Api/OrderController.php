@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
@@ -41,10 +42,21 @@ class OrderController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $isWaiter = $user?->role === 'waiter';
+
+        // Pelayan hanya membuat pesanan dari meja dan tidak boleh memproses pembayaran.
+        if ($isWaiter && $request->filled('payment')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelayan tidak dapat memproses pembayaran. Pesanan akan dibayar di kasir.',
+            ], 403);
+        }
+
         $validated = $request->validate([
-            'table_id' => 'nullable|exists:tables,id',
+            'table_id' => $isWaiter ? 'required|exists:tables,id' : 'nullable|exists:tables,id',
             'customer_name' => 'nullable|string|max:100',
-            'order_type' => 'required|in:dine_in,takeaway',
+            'order_type' => $isWaiter ? 'required|in:dine_in' : 'required|in:dine_in,takeaway',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.menu_id' => 'required|exists:menus,id',
@@ -54,7 +66,10 @@ class OrderController extends Controller
             'payment' => 'nullable|array',
             'payment.method' => 'required_with:payment|in:cash,qris,transfer',
             'payment.amount_paid' => 'required_with:payment|numeric|min:0',
-        ]);
+        ], $isWaiter ? [
+            'table_id.required' => 'Pelayan harus memilih meja untuk pesanan.',
+            'order_type.in' => 'Pelayan hanya dapat membuat pesanan dine-in dari meja.',
+        ] : []);
 
         return DB::transaction(function () use ($validated, $request) {
             $datePrefix = date('Ymd');
@@ -65,7 +80,20 @@ class OrderController extends Controller
             $itemsData = [];
 
             foreach ($validated['items'] as $item) {
-                $menu = Menu::findOrFail($item['menu_id']);
+                $menu = Menu::lockForUpdate()->findOrFail($item['menu_id']);
+
+                if (! $menu->is_available) {
+                    throw ValidationException::withMessages([
+                        'items' => "Menu {$menu->name} sedang tidak tersedia.",
+                    ]);
+                }
+
+                if ($menu->stock !== null && $menu->stock < $item['quantity']) {
+                    throw ValidationException::withMessages([
+                        'items' => "Stok {$menu->name} tidak mencukupi (tersisa {$menu->stock}).",
+                    ]);
+                }
+
                 $itemSubtotal = $menu->price * $item['quantity'];
                 $subtotal += $itemSubtotal;
 
@@ -77,6 +105,10 @@ class OrderController extends Controller
                     'notes' => $item['notes'] ?? null,
                     'item_status' => 'pending',
                 ];
+
+                if ($menu->stock !== null) {
+                    $menu->decrement('stock', $item['quantity']);
+                }
             }
 
             $taxAmount = round($subtotal * 0.10, 2); // Pajak 10%
@@ -87,7 +119,7 @@ class OrderController extends Controller
                 'order_number' => $orderNumber,
                 'user_id' => $request->user()?->id,
                 'table_id' => $validated['table_id'] ?? null,
-                'customer_name' => $validated['customer_name'] ?: 'Pelanggan Walk-In',
+                'customer_name' => ($validated['customer_name'] ?? null) ?: 'Pelanggan Walk-In',
                 'order_type' => $validated['order_type'],
                 'status' => 'pending',
                 'subtotal' => $subtotal,
@@ -147,7 +179,17 @@ class OrderController extends Controller
             'status' => 'required|in:pending,processing,ready,completed,cancelled',
         ]);
 
+        $previousStatus = $order->status;
         $order->update(['status' => $validated['status']]);
+
+        // Kembalikan stok menu jika pesanan dibatalkan (hanya sekali).
+        if ($validated['status'] === 'cancelled' && $previousStatus !== 'cancelled') {
+            foreach ($order->items()->get() as $item) {
+                Menu::where('id', $item->menu_id)
+                    ->whereNotNull('stock')
+                    ->increment('stock', $item->quantity);
+            }
+        }
 
         // Jika pesanan selesai atau dibatalkan, bebaskan meja
         if (in_array($validated['status'], ['completed', 'cancelled']) && $order->table_id) {

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { ROUTE_ACCESS, ROLE_HOME } from './config/access';
 
 import MainLayout from './layouts/MainLayout';
 import Login from './pages/auth/Login';
@@ -22,13 +23,19 @@ function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {
-    // Jika tidak memiliki akses ke halaman tertentu, alihkan ke role default
-    if (role === 'kitchen') return <Navigate to="/kitchen" replace />;
-    if (role === 'cashier') return <Navigate to="/pos" replace />;
-    return <Navigate to="/" replace />;
+    // Kembalikan ke halaman utama sesuai role agar tidak terjadi redirect loop.
+    return <Navigate to={ROLE_HOME[role] || '/login'} replace />;
   }
 
   return children;
+}
+
+function RoleRoute({ path, children }) {
+  return (
+    <ProtectedRoute allowedRoles={ROUTE_ACCESS[path]}>
+      {children}
+    </ProtectedRoute>
+  );
 }
 
 export default function App() {
@@ -49,18 +56,60 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Dashboard />} />
-              <Route path="pos" element={<PosPage />} />
-              <Route path="kitchen" element={<KitchenDisplay />} />
-              <Route path="menus" element={<MenuManagement />} />
-              <Route path="tables" element={<TableManagement />} />
-              <Route path="orders" element={<OrderHistory />} />
+              <Route
+                index
+                element={
+                  <RoleRoute path="/">
+                    <Dashboard />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="pos"
+                element={
+                  <RoleRoute path="/pos">
+                    <PosPage />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="kitchen"
+                element={
+                  <RoleRoute path="/kitchen">
+                    <KitchenDisplay />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="menus"
+                element={
+                  <RoleRoute path="/menus">
+                    <MenuManagement />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="tables"
+                element={
+                  <RoleRoute path="/tables">
+                    <TableManagement />
+                  </RoleRoute>
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <RoleRoute path="/orders">
+                    <OrderHistory />
+                  </RoleRoute>
+                }
+              />
               <Route
                 path="users"
                 element={
-                  <ProtectedRoute allowedRoles={['admin']}>
+                  <RoleRoute path="/users">
                     <UserManagement />
-                  </ProtectedRoute>
+                  </RoleRoute>
                 }
               />
             </Route>

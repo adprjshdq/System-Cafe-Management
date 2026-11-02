@@ -1,220 +1,553 @@
-import React, { useState, useEffect } from 'react';
-import { Grid, Users, Plus, CheckCircle2, AlertCircle, Clock, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  Armchair,
+  CheckCircle2,
+  Clock,
+  LayoutGrid,
+  Plus,
+  RefreshCw,
+  Sun,
+  Trees,
+  Users,
+  X,
+} from 'lucide-react';
 import api from '../../services/api';
+import TableTile from './TableTile';
+import TableDetailPanel from './TableDetailPanel';
+import AddTableDialog from './AddTableDialog';
+import {
+  AREA_META,
+  TABLE_STATUS,
+  getActiveOrders,
+  getTableArea,
+} from './tableUtils';
+
+const minutesAgo = (minutes) =>
+  new Date(Date.now() - minutes * 60 * 1000).toISOString();
+
+const sampleOrders = {
+  2: [
+    {
+      id: 9101,
+      order_number: 'ORD-DEMO-02',
+      status: 'processing',
+      customer_name: 'Rani',
+      order_type: 'dine-in',
+      total_amount: 76000,
+      created_at: minutesAgo(18),
+    },
+  ],
+  3: [
+    {
+      id: 9102,
+      order_number: 'ORD-DEMO-03',
+      status: 'pending',
+      customer_name: 'Bagas',
+      order_type: 'dine-in',
+      total_amount: 54000,
+      created_at: minutesAgo(7),
+    },
+  ],
+  7: [
+    {
+      id: 9103,
+      order_number: 'ORD-DEMO-07',
+      status: 'ready',
+      customer_name: 'Keluarga Sari',
+      order_type: 'dine-in',
+      total_amount: 248000,
+      created_at: minutesAgo(41),
+    },
+  ],
+};
 
 const sampleTables = [
-  { id: 1, table_number: 'Meja 01', capacity: 2, status: 'available' },
-  { id: 2, table_number: 'Meja 02', capacity: 2, status: 'available' },
-  { id: 3, table_number: 'Meja 03', capacity: 4, status: 'occupied' },
-  { id: 4, table_number: 'Meja 04', capacity: 4, status: 'available' },
-  { id: 5, table_number: 'Meja 05', capacity: 6, status: 'reserved' },
-  { id: 6, table_number: 'Meja 06', capacity: 6, status: 'available' },
-  { id: 7, table_number: 'Meja VIP 1', capacity: 8, status: 'occupied' },
-  { id: 8, table_number: 'Outdoor 01', capacity: 4, status: 'available' },
+  { id: 1, table_number: 'Meja 01', capacity: 2, area: 'indoor', status: 'available', orders: [] },
+  { id: 2, table_number: 'Meja 02', capacity: 2, area: 'indoor', status: 'occupied', orders: sampleOrders[2] },
+  { id: 3, table_number: 'Meja 03', capacity: 4, area: 'indoor', status: 'occupied', orders: sampleOrders[3] },
+  { id: 4, table_number: 'Meja 04', capacity: 4, area: 'indoor', status: 'available', orders: [] },
+  { id: 5, table_number: 'Meja 05', capacity: 6, area: 'indoor', status: 'reserved', orders: [] },
+  { id: 6, table_number: 'Meja 06', capacity: 6, area: 'indoor', status: 'available', orders: [] },
+  { id: 7, table_number: 'Meja VIP 1', capacity: 8, area: 'indoor', status: 'occupied', orders: sampleOrders[7] },
+  { id: 8, table_number: 'Outdoor 01', capacity: 4, area: 'outdoor', status: 'available', orders: [] },
+  { id: 9, table_number: 'Outdoor 02', capacity: 2, area: 'outdoor', status: 'reserved', orders: [] },
 ];
+
+const AREA_ICON = {
+  indoor: Sun,
+  outdoor: Trees,
+};
+
+const AREA_ACCENT = {
+  indoor: {
+    icon: 'bg-amber-100 text-amber-700',
+    ring: 'border-amber-200/70',
+    badge: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  outdoor: {
+    icon: 'bg-emerald-100 text-emerald-700',
+    ring: 'border-emerald-200/70',
+    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  },
+};
+
+const tileSpan = (table) =>
+  Number(table.capacity) >= 6 ? 'sm:col-span-2' : '';
+
+function FloorZone({ area, tables, selectedId, now, onSelect }) {
+  const meta = AREA_META[area];
+  const accent = AREA_ACCENT[area];
+  const Icon = AREA_ICON[area] || Armchair;
+  const seats = tables.reduce((total, table) => total + (Number(table.capacity) || 0), 0);
+  const busy = tables.filter((table) => table.status !== 'available').length;
+
+  return (
+    <section
+      aria-label={`Area ${meta.label}`}
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent.icon}`}>
+            <Icon className="h-4 w-4" />
+          </span>
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900">Area {meta.label}</h3>
+            <p className="text-[10px] text-slate-500">{meta.description}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${accent.badge}`}
+          >
+            {tables.length} meja · {seats} kursi
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+            {busy} terpakai
+          </span>
+        </div>
+      </div>
+
+      <div className={`floor-grid m-3 rounded-xl border bg-slate-50/70 p-3 ${accent.ring}`}>
+        {tables.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+            {tables.map((table) => (
+              <TableTile
+                key={table.id}
+                table={table}
+                selected={selectedId === table.id}
+                now={now}
+                onSelect={onSelect}
+                className={tileSpan(table)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-300 shadow-xs">
+              <Armchair className="h-5 w-5" />
+            </span>
+            <p className="text-xs font-bold text-slate-700">Belum ada meja di area ini</p>
+            <p className="max-w-xs text-[10px] leading-relaxed text-slate-500">
+              Tambahkan meja baru dan pilih area {meta.label} agar tampil di denah.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function StatCard({ label, value, hint, icon: Icon, tone }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            {label}
+          </p>
+          <p className="mt-1 text-2xl font-extrabold leading-none text-slate-900">{value}</p>
+        </div>
+        <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${tone}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">{hint}</p>
+    </div>
+  );
+}
 
 export default function TableManagement() {
   const [tables, setTables] = useState(sampleTables);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTableNumber, setNewTableNumber] = useState('');
-  const [newCapacity, setNewCapacity] = useState('4');
+  const [selectedId, setSelectedId] = useState(null);
+  const [orderDetail, setOrderDetail] = useState(null);
+  const [loadingOrder, setLoadingOrder] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [now, setNow] = useState(() => Date.now());
 
-  const fetchTables = async () => {
+  const fetchTables = useCallback(async () => {
     try {
-      const res = await api.get('/v1/tables');
-      if (res.data?.data?.length) setTables(res.data.data);
-    } catch (e) {
-      console.warn('API error, using sample table layout:', e);
+      const response = await api.get('/v1/tables');
+      if (Array.isArray(response.data?.data)) {
+        setTables(response.data.data);
+      }
+    } catch (error) {
+      console.warn('API meja tidak tersedia, menggunakan denah contoh:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTables();
+    const timer = setInterval(fetchTables, 30000);
+    return () => clearInterval(timer);
+  }, [fetchTables]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const handleUpdateStatus = async (tableId, nextStatus) => {
-    try {
-      await api.patch(`/v1/tables/${tableId}/status`, { status: nextStatus });
-    } catch (e) {
-      console.warn('API table status update failed:', e);
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 4500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!selectedId) return undefined;
+    const handleKey = (event) => {
+      if (event.key === 'Escape') setSelectedId(null);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [selectedId]);
+
+  const showToast = (type, message) => setToast({ id: Date.now(), type, message });
+
+  const stats = useMemo(() => {
+    const seats = tables.reduce((total, table) => total + (Number(table.capacity) || 0), 0);
+    return {
+      total: tables.length,
+      seats,
+      available: tables.filter((table) => table.status === 'available').length,
+      occupied: tables.filter((table) => table.status === 'occupied').length,
+      reserved: tables.filter((table) => table.status === 'reserved').length,
+    };
+  }, [tables]);
+
+  const grouped = useMemo(
+    () => ({
+      indoor: tables.filter((table) => getTableArea(table) === 'indoor'),
+      outdoor: tables.filter((table) => getTableArea(table) === 'outdoor'),
+    }),
+    [tables]
+  );
+
+  const selectedTable = useMemo(
+    () => tables.find((table) => table.id === selectedId) || null,
+    [tables, selectedId]
+  );
+
+  const selectedOrders = selectedTable ? getActiveOrders(selectedTable) : [];
+  const firstOrderId = selectedOrders[0]?.id ?? null;
+
+  useEffect(() => {
+    if (!selectedTable || !firstOrderId) {
+      setOrderDetail(null);
+      setLoadingOrder(false);
+      return undefined;
     }
-    setTables(tables.map(t => t.id === tableId ? { ...t, status: nextStatus } : t));
+
+    let active = true;
+    setLoadingOrder(true);
+
+    api
+      .get(`/v1/orders/${firstOrderId}`)
+      .then((response) => {
+        if (active) setOrderDetail(response.data?.data || selectedOrders[0]);
+      })
+      .catch(() => {
+        // Backend tidak menjangkau detail; tampilkan ringkasan dari daftar meja.
+        if (active) setOrderDetail(selectedOrders[0]);
+      })
+      .finally(() => {
+        if (active) setLoadingOrder(false);
+      });
+
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstOrderId, selectedTable?.id]);
+
+  const handleSelect = (table) => setSelectedId(table.id);
+
+  const handleStatusChange = async (table, status) => {
+    if (table.status === status) return;
+
+    const previousStatus = table.status;
+    setUpdatingStatus({ id: table.id, status });
+    setTables((previous) =>
+      previous.map((item) => (item.id === table.id ? { ...item, status } : item))
+    );
+
+    try {
+      await api.patch(`/v1/tables/${table.id}/status`, { status });
+      showToast(
+        'success',
+        `${table.table_number} diperbarui menjadi ${TABLE_STATUS[status].label}.`
+      );
+    } catch (error) {
+      if (error.response) {
+        setTables((previous) =>
+          previous.map((item) =>
+            item.id === table.id ? { ...item, status: previousStatus } : item
+          )
+        );
+        showToast(
+          'error',
+          error.response.data?.message || 'Gagal memperbarui status meja.'
+        );
+      } else {
+        showToast('success', 'Status diperbarui secara lokal (mode demo).');
+      }
+    } finally {
+      setUpdatingStatus(null);
+    }
   };
 
-  const handleAddTable = async (e) => {
-    e.preventDefault();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchTables();
+    setRefreshing(false);
+    showToast('success', 'Denah meja berhasil disegarkan.');
+  };
+
+  const handleAddTable = async (payload) => {
     try {
-      await api.post('/v1/tables', {
-        table_number: newTableNumber,
-        capacity: Number(newCapacity),
+      const response = await api.post('/v1/tables', {
+        ...payload,
         status: 'available',
       });
-      fetchTables();
-    } catch (err) {
-      setTables([...tables, { id: Date.now(), table_number: newTableNumber, capacity: Number(newCapacity), status: 'available' }]);
+      await fetchTables();
+      if (response.data?.data?.id) setSelectedId(response.data.data.id);
+      showToast('success', `Meja ${payload.table_number} berhasil ditambahkan.`);
+    } catch (error) {
+      if (error.response) throw error;
+
+      const localTable = {
+        id: Date.now(),
+        status: 'available',
+        orders: [],
+        ...payload,
+      };
+      setTables((previous) => [...previous, localTable]);
+      setSelectedId(localTable.id);
+      showToast('success', 'Meja ditambahkan secara lokal (mode demo).');
     }
-    setIsModalOpen(false);
-    setNewTableNumber('');
   };
 
-  const statusColorMap = {
-    available: {
-      bg: 'bg-emerald-50 border-emerald-200 text-emerald-900',
-      badge: 'bg-emerald-100 text-emerald-800',
-      label: 'Tersedia',
-    },
-    occupied: {
-      bg: 'bg-rose-50 border-rose-200 text-rose-900',
-      badge: 'bg-rose-100 text-rose-800',
-      label: 'Terisi',
-    },
-    reserved: {
-      bg: 'bg-amber-50 border-amber-200 text-amber-900',
-      badge: 'bg-amber-100 text-amber-800',
-      label: 'Reservasi',
-    },
-  };
+  const detailPanel = selectedTable && (
+    <TableDetailPanel
+      table={selectedTable}
+      order={loadingOrder ? null : orderDetail}
+      loadingOrder={loadingOrder}
+      now={now}
+      updatingStatus={updatingStatus?.id === selectedTable.id ? updatingStatus.status : null}
+      onStatusChange={handleStatusChange}
+      onClose={() => setSelectedId(null)}
+    />
+  );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Grid className="w-5 h-5 text-amber-500" />
-            <span>Manajemen Meja & Keterisian</span>
+          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <LayoutGrid className="h-5 w-5 text-amber-500" />
+            <span>Denah Meja</span>
           </h2>
-          <p className="text-xs text-slate-500">Visualisasi denah meja cafe dan kontrol status ketersediaan.</p>
+          <p className="text-xs text-slate-500">
+            Denah visual area indoor & outdoor dengan status, kapasitas, dan durasi pemakaian.
+          </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-2 shadow-xs transition-colors self-start"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Meja Baru</span>
-        </button>
+
+        <div className="flex items-center gap-2 self-start">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Segarkan
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Meja
+          </button>
+        </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 text-xs font-medium text-slate-600 bg-white p-3 rounded-xl border border-slate-200">
-        <span className="text-slate-400 font-normal">Keterangan:</span>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-          <span>Tersedia</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-          <span>Terisi (Occupied)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-          <span>Dipesan (Reserved)</span>
-        </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="Total Meja"
+          value={stats.total}
+          hint={`${stats.seats} kursi di ${grouped.indoor.length > 0 && grouped.outdoor.length > 0 ? '2 area' : 'denah'}`}
+          icon={Armchair}
+          tone="bg-slate-100 text-slate-600"
+        />
+        <StatCard
+          label="Tersedia"
+          value={stats.available}
+          hint="Meja kosong siap dipakai"
+          icon={CheckCircle2}
+          tone="bg-emerald-100 text-emerald-700"
+        />
+        <StatCard
+          label="Terisi"
+          value={stats.occupied}
+          hint="Ada tamu / pesanan aktif"
+          icon={Users}
+          tone="bg-rose-100 text-rose-700"
+        />
+        <StatCard
+          label="Reservasi"
+          value={stats.reserved}
+          hint="Menunggu tamu booking"
+          icon={Clock}
+          tone="bg-amber-100 text-amber-700"
+        />
       </div>
 
-      {/* Table Cards Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {tables.map((table) => {
-          const config = statusColorMap[table.status] || statusColorMap.available;
-          return (
-            <div
-              key={table.id}
-              className={`rounded-2xl border p-5 flex flex-col justify-between transition-all shadow-xs ${config.bg}`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-extrabold text-base">{table.table_number}</span>
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${config.badge}`}>
-                    {config.label}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div className="space-y-4">
+          {/* Legend */}
+          <section
+            aria-label="Keterangan status meja"
+            className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs"
+          >
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Keterangan
+              </span>
+              {Object.entries(TABLE_STATUS).map(([value, meta]) => (
+                <span key={value} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+                  <span className={`h-2.5 w-2.5 rounded-full ${meta.dot}`} />
+                  {meta.label}
+                  <span className="text-slate-400">
+                    · {stats[value] ?? 0} meja
                   </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs opacity-80 mb-4">
-                  <Users className="w-4 h-4" />
-                  <span>Kapasitas {table.capacity} Kursi</span>
-                </div>
-              </div>
-
-              {/* Status Switcher Actions */}
-              <div className="pt-3 border-t border-black/5 flex gap-1.5 text-[11px]">
-                <button
-                  onClick={() => handleUpdateStatus(table.id, 'available')}
-                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${table.status === 'available'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-white/80 hover:bg-white text-slate-700'
-                    }`}
-                >
-                  Kosong
-                </button>
-                <button
-                  onClick={() => handleUpdateStatus(table.id, 'occupied')}
-                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${table.status === 'occupied'
-                    ? 'bg-rose-600 text-white'
-                    : 'bg-white/80 hover:bg-white text-slate-700'
-                    }`}
-                >
-                  Terisi
-                </button>
-                <button
-                  onClick={() => handleUpdateStatus(table.id, 'reserved')}
-                  className={`flex-1 py-1 rounded-lg font-semibold transition-colors ${table.status === 'reserved'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-white/80 hover:bg-white text-slate-700'
-                    }`}
-                >
-                  Booking
-                </button>
-              </div>
+                </span>
+              ))}
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-slate-400 sm:ml-auto">
+                <Clock className="h-3 w-3" />
+                Durasi dihitung dari pesanan aktif pertama
+              </span>
             </div>
-          );
-        })}
+          </section>
+
+          <FloorZone
+            area="indoor"
+            tables={grouped.indoor}
+            selectedId={selectedId}
+            now={now}
+            onSelect={handleSelect}
+          />
+          <FloorZone
+            area="outdoor"
+            tables={grouped.outdoor}
+            selectedId={selectedId}
+            now={now}
+            onSelect={handleSelect}
+          />
+        </div>
+
+        {/* Panel detail desktop */}
+        <aside className="hidden xl:sticky xl:top-6 xl:block">
+          {detailPanel || (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-xs">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                <Armchair className="h-6 w-6" />
+              </span>
+              <p className="mt-2 text-sm font-bold text-slate-800">Pilih meja pada denah</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Klik salah satu meja untuk melihat status, durasi pemakaian, dan detail
+                pesanan aktif.
+              </p>
+            </div>
+          )}
+        </aside>
       </div>
 
-      {/* Modal Tambah Meja */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800 text-sm">Tambah Meja Baru</h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-lg text-slate-400 hover:bg-slate-100 flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* Bottom sheet mobile */}
+      {selectedTable && (
+        <div className="fixed inset-0 z-[60] xl:hidden">
+          <div
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+            onClick={() => setSelectedId(null)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Detail ${selectedTable.table_number}`}
+            className="animate-dialog-pop absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-3xl bg-slate-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl"
+          >
+            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-slate-300" />
+            {detailPanel}
+          </div>
+        </div>
+      )}
 
-            <form onSubmit={handleAddTable} className="space-y-4 mt-4 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Nomor / Nama Meja</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Meja 09 atau VIP 02"
-                  value={newTableNumber}
-                  onChange={(e) => setNewTableNumber(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                />
-              </div>
+      {addOpen && (
+        <AddTableDialog onClose={() => setAddOpen(false)} onSave={handleAddTable} />
+      )}
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Kapasitas (Kursi)</label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  value={newCapacity}
-                  onChange={(e) => setNewCapacity(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors mt-2"
-              >
-                Simpan Meja
-              </button>
-            </form>
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="animate-pos-toast fixed bottom-4 right-4 z-[80] w-[min(22rem,calc(100vw-2rem))]"
+        >
+          <div
+            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3 shadow-xl ${
+              toast.type === 'error' ? 'border-rose-200' : 'border-emerald-200'
+            }`}
+          >
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                toast.type === 'error'
+                  ? 'bg-rose-100 text-rose-600'
+                  : 'bg-emerald-100 text-emerald-600'
+              }`}
+            >
+              {toast.type === 'error' ? (
+                <AlertCircle className="h-4 w-4" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+            </span>
+            <p className="flex-1 text-xs font-semibold leading-relaxed text-slate-700">
+              {toast.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              aria-label="Tutup notifikasi"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       )}

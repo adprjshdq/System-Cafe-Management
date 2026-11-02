@@ -54,13 +54,13 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 rounded-2xl p-6 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 uppercase tracking-wider">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 uppercase tracking-wider">
             Operasional Hari Ini
           </span>
-          <h1 className="text-2xl font-bold mt-2">Selamat Datang di Cafe 24 Jam</h1>
-          <p className="text-slate-300 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-slate-900 mt-2">Selamat Datang di Aroma Cafe</h1>
+          <p className="text-slate-500 text-sm mt-1">
             Pantau arus kas, status antrean barista, dan keterisian meja secara langsung.
           </p>
         </div>
@@ -74,9 +74,9 @@ export default function Dashboard() {
           </Link>
           <Link
             to="/kitchen"
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-medium border border-slate-700 rounded-xl text-sm transition-all flex items-center gap-2"
+            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium border border-slate-200 rounded-xl text-sm transition-all flex items-center gap-2"
           >
-            <Coffee className="w-4 h-4 text-amber-400" />
+            <Coffee className="w-4 h-4 text-amber-600" />
             <span>Monitor Dapur</span>
           </Link>
         </div>

@@ -44,6 +44,7 @@ class MenuController extends Controller
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'image_base64' => 'nullable|string',
         ]);
@@ -96,6 +97,7 @@ class MenuController extends Controller
             'price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'is_available' => 'nullable|boolean',
+            'stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'image_base64' => 'nullable|string',
         ]);

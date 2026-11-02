@@ -424,7 +424,7 @@ export default function UserManagement() {
               onClick={() => setSelectedRole(r.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 selectedRole === r.id
-                  ? 'bg-slate-900 text-white shadow-sm font-semibold'
+                  ? 'bg-brand-700 text-white shadow-sm font-semibold'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
               }`}
             >
@@ -572,55 +572,6 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* Role Permission Guide Card */}
-      <div className="bg-linear-to-r from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-md">
-        <h3 className="font-bold text-base flex items-center gap-2 mb-3">
-          <Shield className="w-5 h-5 text-amber-400" />
-          Panduan Hak Akses Tampilan Berdasarkan Role
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
-          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-            <div className="flex items-center space-x-2 text-purple-300 font-bold mb-1">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Admin / Manager</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              Melihat seluruh halaman: <strong>Dashboard</strong>, <strong>Kasir (POS)</strong>, <strong>Display Dapur</strong>, <strong>Katalog Menu</strong>, <strong>Kelola Meja</strong>, <strong>Riwayat Transaksi</strong>, dan <strong>Kelola Pengguna</strong>.
-            </p>
-          </div>
-
-          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-            <div className="flex items-center space-x-2 text-blue-300 font-bold mb-1">
-              <ShoppingBag className="w-4 h-4" />
-              <span>Kasir (Cashier)</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              Hanya melihat <strong>Kasir / POS</strong>, <strong>Kelola Meja</strong> (cek meja kosong/terisi), dan <strong>Riwayat Pesanan</strong> (cetak struk).
-            </p>
-          </div>
-
-          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-            <div className="flex items-center space-x-2 text-amber-300 font-bold mb-1">
-              <ChefHat className="w-4 h-4" />
-              <span>Dapur (Kitchen)</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              Fokus hanya melihat <strong>Kitchen Display System (KDS)</strong> antrian pesanan yang harus dimasak dan diracik tanpa melihat keuangan/harga.
-            </p>
-          </div>
-
-          <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700/60">
-            <div className="flex items-center space-x-2 text-emerald-300 font-bold mb-1">
-              <Utensils className="w-4 h-4" />
-              <span>Pelayan (Waiter)</span>
-            </div>
-            <p className="text-slate-300 leading-relaxed">
-              Hanya melihat antarmuka <strong>Kasir / POS</strong> untuk mencatat pesanan pelanggan dari meja secara langsung.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Add / Edit User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -737,7 +688,7 @@ export default function UserManagement() {
                         onClick={() => setFormData({ ...formData, role: r.id })}
                         className={`flex items-center space-x-2.5 p-3 rounded-xl border text-left transition-all ${
                           isSelected
-                            ? 'border-amber-500 bg-amber-50/50 ring-2 ring-amber-500/20'
+                            ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-600/20'
                             : 'border-slate-200 hover:border-slate-300 bg-white'
                         }`}
                       >

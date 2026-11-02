@@ -54,14 +54,14 @@ class DatabaseSeeder extends Seeder
 
         // 2. Meja Cafe
         $tables = [
-            ['table_number' => 'Meja 01', 'capacity' => 2, 'status' => 'available'],
-            ['table_number' => 'Meja 02', 'capacity' => 2, 'status' => 'available'],
-            ['table_number' => 'Meja 03', 'capacity' => 4, 'status' => 'available'],
-            ['table_number' => 'Meja 04', 'capacity' => 4, 'status' => 'available'],
-            ['table_number' => 'Meja 05', 'capacity' => 6, 'status' => 'available'],
-            ['table_number' => 'Meja 06', 'capacity' => 6, 'status' => 'available'],
-            ['table_number' => 'Meja VIP 1', 'capacity' => 8, 'status' => 'available'],
-            ['table_number' => 'Outdoor 01', 'capacity' => 4, 'status' => 'available'],
+            ['table_number' => 'Meja 01', 'capacity' => 2, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Meja 02', 'capacity' => 2, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Meja 03', 'capacity' => 4, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Meja 04', 'capacity' => 4, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Meja 05', 'capacity' => 6, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Meja 06', 'capacity' => 6, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Meja VIP 1', 'capacity' => 8, 'area' => 'indoor', 'status' => 'available'],
+            ['table_number' => 'Outdoor 01', 'capacity' => 4, 'area' => 'outdoor', 'status' => 'available'],
         ];
 
         foreach ($tables as $t) {
@@ -187,7 +187,21 @@ class DatabaseSeeder extends Seeder
             ],
         ];
 
+        $menuStocks = [
+            'espresso-single' => 40,
+            'iced-americano' => 35,
+            'caramel-macchiato' => 25,
+            'kopi-susu-gula-aren' => 30,
+            'matcha-latte' => 18,
+            'signature-chocolate' => 22,
+            'nasi-goreng-kampung-spesial' => 15,
+            'spaghetti-carbonara' => 10,
+            'crispy-french-fries' => 20,
+            'butter-croissant' => 4,
+        ];
+
         foreach ($menus as $menu) {
+            $menu['stock'] = $menuStocks[$menu['slug']] ?? null;
             Menu::updateOrCreate(['slug' => $menu['slug']], $menu);
         }
     }

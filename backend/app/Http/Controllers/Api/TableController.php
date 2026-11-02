@@ -26,6 +26,7 @@ class TableController extends Controller
         $validated = $request->validate([
             'table_number' => 'required|string|max:20|unique:tables,table_number',
             'capacity' => 'required|integer|min:1',
+            'area' => 'sometimes|in:indoor,outdoor',
             'status' => 'in:available,occupied,reserved',
         ]);
 
@@ -43,6 +44,7 @@ class TableController extends Controller
         $validated = $request->validate([
             'table_number' => 'required|string|max:20|unique:tables,table_number,' . $table->id,
             'capacity' => 'required|integer|min:1',
+            'area' => 'sometimes|in:indoor,outdoor',
             'status' => 'in:available,occupied,reserved',
         ]);
 
