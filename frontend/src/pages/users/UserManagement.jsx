@@ -293,7 +293,7 @@ export default function UserManagement() {
             <div>
               <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
                 <img
-                  src="./public/icon_user.png"
+                  src="/icon_user.png"
                   alt="Icon Manajemen Pengguna"
                   className="h-7 w-7 object-contain"
                 />
@@ -319,8 +319,12 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Total Staf</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Users className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+              <img
+                src="/icon_user.png"
+                alt="Total Staf"
+                className="w-6 h-6 object-contain"
+              />
             </div>
           </div>
           <div className="text-2xl font-bold text-slate-900 mt-2">{stats.total}</div>
@@ -330,8 +334,12 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Admin</span>
-            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+              <img
+                src="/admin.png"
+                alt="Admin"
+                className="w-6 h-6 object-contain"
+              />
             </div>
           </div>
           <div className="text-2xl font-bold text-purple-900 mt-2">{stats.admin}</div>
@@ -341,8 +349,12 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Kasir</span>
-            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+              <img
+                src="/menu.png"
+                alt="Kasir"
+                className="w-6 h-6 object-contain"
+              />
             </div>
           </div>
           <div className="text-2xl font-bold text-blue-900 mt-2">{stats.cashier}</div>
@@ -352,8 +364,12 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Dapur / Barista</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
-              <ChefHat className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+              <img
+                src="/kitchen.png"
+                alt="Dapur / Barista"
+                className="w-6 h-6 object-contain"
+              />
             </div>
           </div>
           <div className="text-2xl font-bold text-amber-900 mt-2">{stats.kitchen}</div>
@@ -363,8 +379,12 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 md:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Waiter</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-              <Utensils className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+              <img
+                src="/waiters.png"
+                alt="Waiter"
+                className="w-6 h-6 object-contain"
+              />
             </div>
           </div>
           <div className="text-2xl font-bold text-emerald-900 mt-2">{stats.waiter}</div>
@@ -427,8 +447,8 @@ export default function UserManagement() {
               key={r.id}
               onClick={() => setSelectedRole(r.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${selectedRole === r.id
-                  ? 'bg-brand-700 text-white shadow-sm font-semibold'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                ? 'bg-brand-700 text-white shadow-sm font-semibold'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
                 }`}
             >
               {r.label}
@@ -556,8 +576,8 @@ export default function UserManagement() {
                             onClick={() => setDeleteConfirmUser(item)}
                             disabled={isCurrent}
                             className={`p-1.5 rounded-lg transition-colors ${isCurrent
-                                ? 'text-slate-300 cursor-not-allowed'
-                                : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
+                              ? 'text-slate-300 cursor-not-allowed'
+                              : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
                               }`}
                             title={isCurrent ? 'Tidak bisa menghapus akun sendiri' : 'Hapus pengguna'}
                           >
@@ -581,8 +601,12 @@ export default function UserManagement() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-100">
               <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                  {editingUser ? <Edit2 className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                <div className="w-9 h-9 rounded-xl bg-amber-0 flex items-center justify-center">
+                  <img
+                    src={editingUser ? "/icon_user_edit.png" : "/icon_user.png"}
+                    alt="Pengguna"
+                    className="w-6 h-6 object-contain"
+                  />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-lg">
@@ -625,7 +649,7 @@ export default function UserManagement() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Contoh: Rian Barista"
-                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#77422D]/30 focus:border-[#77422D]"
                   />
                 </div>
               </div>
@@ -643,7 +667,7 @@ export default function UserManagement() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="Contoh: rian@cafe.com"
-                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#77422D]/30 focus:border-[#77422D]"
                   />
                 </div>
               </div>
@@ -664,7 +688,7 @@ export default function UserManagement() {
                         ? 'Kosongkan jika tidak ingin mengubah password'
                         : 'Minimal 6 karakter'
                     }
-                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500"
+                    className="w-full pl-9 pr-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#77422D]/30 focus:border-[#77422D]"
                   />
                 </div>
               </div>
@@ -689,8 +713,8 @@ export default function UserManagement() {
                         key={r.id}
                         onClick={() => setFormData({ ...formData, role: r.id })}
                         className={`flex items-center space-x-2.5 p-3 rounded-xl border text-left transition-all ${isSelected
-                            ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-600/20'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                          ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-600/20'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
                           }`}
                       >
                         <RIcon className={`w-4 h-4 shrink-0 ${r.color}`} />
@@ -738,7 +762,7 @@ export default function UserManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-md shadow-amber-500/20 transition-all hover:scale-[1.02]"
+                  className="px-5 py-2 rounded-xl bg-[#77422D] hover:bg-[#653724] text-white text-xs font-bold shadow-md shadow-[#77422D]/20 transition-all hover:scale-[1.02]"
                 >
                   {editingUser ? 'Simpan Perubahan' : 'Buat Pengguna'}
                 </button>

@@ -126,7 +126,7 @@ export default function Sidebar({ open = false, onClose }) {
           <div className="flex items-center justify-between p-3 rounded-xl bg-slate-100 mb-3">
             <div className="overflow-hidden pr-2">
               <p className="text-sm font-medium text-slate-900 truncate">{user?.name || 'Karyawan'}</p>
-              <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-100 text-brand-700">
                 {user?.role || 'staff'}
               </span>
             </div>

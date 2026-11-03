@@ -7,8 +7,6 @@ import {
   LayoutGrid,
   Plus,
   RefreshCw,
-  Sun,
-  Trees,
   Users,
   X,
 } from 'lucide-react';
@@ -17,6 +15,7 @@ import TableTile from './TableTile';
 import TableDetailPanel from './TableDetailPanel';
 import AddTableDialog from './AddTableDialog';
 import {
+  AREA_IMAGE,
   AREA_META,
   TABLE_STATUS,
   getActiveOrders,
@@ -74,11 +73,6 @@ const sampleTables = [
   { id: 9, table_number: 'Outdoor 02', capacity: 2, area: 'outdoor', status: 'reserved', orders: [] },
 ];
 
-const AREA_ICON = {
-  indoor: Sun,
-  outdoor: Trees,
-};
-
 const AREA_ACCENT = {
   indoor: {
     icon: 'bg-amber-100 text-amber-700',
@@ -98,7 +92,6 @@ const tileSpan = (table) =>
 function FloorZone({ area, tables, selectedId, now, onSelect }) {
   const meta = AREA_META[area];
   const accent = AREA_ACCENT[area];
-  const Icon = AREA_ICON[area] || Armchair;
   const seats = tables.reduce((total, table) => total + (Number(table.capacity) || 0), 0);
   const busy = tables.filter((table) => table.status !== 'available').length;
 
@@ -110,7 +103,12 @@ function FloorZone({ area, tables, selectedId, now, onSelect }) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent.icon}`}>
-            <Icon className="h-4 w-4" />
+            <img
+              src={AREA_IMAGE[area]}
+              alt=""
+              aria-hidden="true"
+              className="h-6 w-6 object-contain"
+            />
           </span>
           <div>
             <h3 className="text-sm font-extrabold text-slate-900">Area {meta.label}</h3>
@@ -160,7 +158,9 @@ function FloorZone({ area, tables, selectedId, now, onSelect }) {
   );
 }
 
-function StatCard({ label, value, hint, icon: Icon, tone }) {
+function StatCard({ label, value, hint, icon: Icon, iconSrc, tone }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs">
       <div className="flex items-start justify-between gap-2">
@@ -171,7 +171,17 @@ function StatCard({ label, value, hint, icon: Icon, tone }) {
           <p className="mt-1 text-2xl font-extrabold leading-none text-slate-900">{value}</p>
         </div>
         <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${tone}`}>
-          <Icon className="h-4 w-4" />
+          {iconSrc && !imageFailed ? (
+            <img
+              src={iconSrc}
+              alt=""
+              aria-hidden="true"
+              onError={() => setImageFailed(true)}
+              className="h-6 w-6 object-contain"
+            />
+          ) : (
+            <Icon className="h-4 w-4" />
+          )}
         </span>
       </div>
       <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">{hint}</p>
@@ -370,7 +380,7 @@ export default function TableManagement() {
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
             <img
-              src="./public/denah_meja.png"
+              src="/denah_meja.png"
               alt="Icon Denah Meja"
               className="h-7 w-7 object-contain"
             />
@@ -394,7 +404,7 @@ export default function TableManagement() {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#77422D] px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-[#653724] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#77422D] focus-visible:ring-offset-2"
           >
             <Plus className="h-4 w-4" />
             Tambah Meja
@@ -408,28 +418,32 @@ export default function TableManagement() {
           value={stats.total}
           hint={`${stats.seats} kursi di ${grouped.indoor.length > 0 && grouped.outdoor.length > 0 ? '2 area' : 'denah'}`}
           icon={Armchair}
-          tone="bg-slate-100 text-slate-600"
+          iconSrc="/denah_meja.png"
+          tone="bg-slate-0 text-slate-600"
         />
         <StatCard
           label="Tersedia"
           value={stats.available}
           hint="Meja kosong siap dipakai"
           icon={CheckCircle2}
-          tone="bg-emerald-100 text-emerald-700"
+          iconSrc="/icon_ceklis.png"
+          tone="bg-emerald-0 text-emerald-700"
         />
         <StatCard
           label="Terisi"
           value={stats.occupied}
           hint="Ada tamu / pesanan aktif"
           icon={Users}
-          tone="bg-rose-100 text-rose-700"
+          iconSrc="/icon_user.png"
+          tone="bg-rose-0 text-rose-700"
         />
         <StatCard
           label="Reservasi"
           value={stats.reserved}
           hint="Menunggu tamu booking"
           icon={Clock}
-          tone="bg-amber-100 text-amber-700"
+          iconSrc="/icon_waktu.png"
+          tone="bg-amber-0 text-amber-700"
         />
       </div>
 
@@ -480,8 +494,12 @@ export default function TableManagement() {
         <aside className="hidden xl:sticky xl:top-6 xl:block">
           {detailPanel || (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-xs">
-              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                <Armchair className="h-6 w-6" />
+              <span className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+                <img
+                  src="/denah_meja.png"
+                  alt="Kursi"
+                  className="h-full w-full object-cover"
+                />
               </span>
               <p className="mt-2 text-sm font-bold text-slate-800">Pilih meja pada denah</p>
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
@@ -529,8 +547,8 @@ export default function TableManagement() {
           >
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toast.type === 'error'
-                  ? 'bg-rose-100 text-rose-600'
-                  : 'bg-emerald-100 text-emerald-600'
+                ? 'bg-rose-100 text-rose-600'
+                : 'bg-emerald-100 text-emerald-600'
                 }`}
             >
               {toast.type === 'error' ? (

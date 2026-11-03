@@ -21,10 +21,10 @@ export default function ProductCard({ menu, categories = [], quantityInCart = 0,
       aria-label={`${menu.name}, ${formatCurrency(menu.price)}. ${status.label}.${
         status.disabled ? '' : ' Tekan Enter untuk menambah ke keranjang.'
       }`}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 ${
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 ${
         status.disabled
           ? 'cursor-not-allowed border-slate-200 opacity-70'
-          : 'cursor-pointer border-slate-200 hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/5'
+          : 'cursor-pointer border-slate-200 hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-lg hover:shadow-brand-500/5'
       }`}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
@@ -45,7 +45,7 @@ export default function ProductCard({ menu, categories = [], quantityInCart = 0,
           </span>
 
           {quantityInCart > 0 && !status.disabled && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-1 text-[10px] font-bold text-slate-950 shadow-xs">
+            <span className="inline-flex items-center gap-1 rounded-full bg-brand-700 px-2 py-1 text-[10px] font-bold text-white shadow-xs">
               <ShoppingBag className="h-3 w-3" />
               {quantityInCart}
             </span>
@@ -61,7 +61,7 @@ export default function ProductCard({ menu, categories = [], quantityInCart = 0,
         )}
 
         {!status.disabled && (
-          <span className="absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-md transition-transform group-hover:scale-105 group-active:scale-95">
+          <span className="absolute bottom-2.5 right-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-brand-700 text-white shadow-md transition-transform group-hover:scale-105 group-active:scale-95">
             <Plus className="h-4 w-4" />
           </span>
         )}
@@ -69,7 +69,7 @@ export default function ProductCard({ menu, categories = [], quantityInCart = 0,
 
       <div className="flex flex-1 flex-col p-3.5">
         <div className="flex items-start justify-between gap-2">
-          <span className="block text-[15px] font-bold leading-snug text-slate-800 line-clamp-1 group-hover:text-amber-800">
+          <span className="block text-[15px] font-bold leading-snug text-slate-800 line-clamp-1 group-hover:text-brand-700">
             {menu.name}
           </span>
           <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
@@ -86,7 +86,7 @@ export default function ProductCard({ menu, categories = [], quantityInCart = 0,
             {formatCurrency(menu.price)}
           </span>
           {status.stock !== null && status.stock > 0 && status.stock <= 5 && (
-            <span className="text-[11px] font-semibold text-amber-600">
+            <span className="text-[11px] font-semibold text-brand-700">
               Tinggal {status.stock} lagi
             </span>
           )}

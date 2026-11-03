@@ -46,9 +46,9 @@ export default function CartPanel({
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
             <img
-              src="./public/icon_keranjang.png"
+              src="/icon_keranjang.png"
               alt="Keranjang Pesanan"
               className="h-6 w-6 object-contain"
             />
@@ -110,7 +110,7 @@ export default function CartPanel({
       <div className="min-h-0 flex-1 overflow-y-auto py-3">
         <div className="space-y-2.5 border-b border-slate-100 pb-3">
           {isWaiter ? (
-            <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-800">
+            <div className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-[11px] font-bold text-brand-800">
               <UtensilsCrossed className="h-4 w-4 shrink-0" />
               Pesanan Dine-In · wajib pilih meja
             </div>
@@ -153,7 +153,7 @@ export default function CartPanel({
               onChange={(event) => setCustomerName(event.target.value)}
               placeholder="Nama pelanggan (opsional)"
               aria-label="Nama pelanggan"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs transition-colors focus:border-amber-500 focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs transition-colors focus:border-brand-600 focus:bg-white focus:outline-none"
             />
 
             {(isWaiter || orderType === 'dine_in') && (
@@ -165,8 +165,8 @@ export default function CartPanel({
                 }}
                 aria-label="Pilih meja"
                 className={`w-full rounded-xl border bg-slate-50 px-3 py-2 text-xs font-semibold transition-colors focus:bg-white focus:outline-none ${isWaiter && !selectedTable
-                    ? 'border-amber-300 focus:border-amber-500'
-                    : 'border-slate-200 focus:border-amber-500'
+                    ? 'border-brand-300 focus:border-brand-600'
+                    : 'border-slate-200 focus:border-brand-600'
                   }`}
               >
                 <option value="">{isWaiter ? 'Pilih meja (wajib)' : 'Pilih meja (opsional)'}</option>
@@ -188,7 +188,7 @@ export default function CartPanel({
             )}
 
             {isWaiter && !selectedTable && (
-              <p className="flex items-start gap-1 px-1 text-[10px] font-semibold text-amber-700">
+              <p className="flex items-start gap-1 px-1 text-[10px] font-semibold text-brand-700">
                 <UtensilsCrossed className="mt-0.5 h-3 w-3 shrink-0" />
                 Pilih meja dulu agar pesanan bisa dikirim ke dapur.
               </p>
@@ -267,14 +267,14 @@ export default function CartPanel({
                             disabled={maxReached}
                             aria-label={`Tambah jumlah ${item.name}`}
                             title={maxReached ? 'Stok maksimum tercapai' : undefined}
-                            className="flex h-9 w-9 items-center justify-center rounded-r-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex h-9 w-9 items-center justify-center rounded-r-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
                         </div>
 
                         {typeof item.stock === 'number' && item.stock <= 5 && (
-                          <span className="text-[10px] font-semibold text-amber-600">
+                          <span className="text-[10px] font-semibold text-brand-700">
                             Maks. {item.stock}
                           </span>
                         )}
@@ -297,7 +297,7 @@ export default function CartPanel({
                     onChange={(event) => onUpdateNotes(item.id, event.target.value)}
                     placeholder="Catatan (cth: Less Ice, tanpa gula)"
                     aria-label={`Catatan untuk ${item.name}`}
-                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] transition-colors focus:border-amber-400 focus:outline-none"
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] transition-colors focus:border-brand-600 focus:outline-none"
                   />
                 </div>
               );
@@ -319,7 +319,7 @@ export default function CartPanel({
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-dashed border-slate-200 pt-2">
             <span className="text-sm font-bold text-slate-900">Total Tagihan</span>
-            <span className="text-lg font-extrabold tracking-tight text-amber-600">
+            <span className="text-lg font-extrabold tracking-tight text-brand-700">
               {formatCurrency(totalAmount)}
             </span>
           </div>
@@ -329,18 +329,15 @@ export default function CartPanel({
           type="button"
           onClick={onCheckout}
           disabled={cartItems.length === 0}
-          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-md transition-all active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 ${isWaiter
+          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold shadow-md transition-all active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 ${isWaiter
               ? 'bg-emerald-600 text-white shadow-emerald-600/20 hover:bg-emerald-500'
-              : 'bg-amber-500 text-slate-950 shadow-amber-500/20 hover:bg-amber-400'
+              : 'bg-brand-700 text-white shadow-brand-900/20 hover:bg-brand-600'
             }`}
         >
           {isWaiter ? <Send className="h-4 w-4" /> : <ReceiptText className="h-4 w-4" />}
           {isWaiter ? 'Kirim Pesanan' : 'Bayar Sekarang'}
           {cartItems.length > 0 && (
-            <span
-              className={`rounded-lg px-2 py-0.5 text-xs font-extrabold ${isWaiter ? 'bg-white/20' : 'bg-slate-950/10'
-                }`}
-            >
+            <span className="rounded-lg bg-white/20 px-2 py-0.5 text-xs font-extrabold">
               {formatCurrency(totalAmount)}
             </span>
           )}

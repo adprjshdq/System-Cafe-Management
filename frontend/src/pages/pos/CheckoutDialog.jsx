@@ -103,7 +103,7 @@ export default function CheckoutDialog({
         {/* Header */}
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
               <ReceiptText className="h-5 w-5" />
             </span>
             <div>
@@ -179,7 +179,7 @@ export default function CheckoutDialog({
               </div>
               <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
                 <span className="text-xs font-bold text-slate-900">Total</span>
-                <span className="text-base font-extrabold text-amber-600">
+                <span className="text-base font-extrabold text-brand-700">
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
@@ -236,7 +236,7 @@ export default function CheckoutDialog({
                   className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-colors ${
                     paid > 0 && !isEnough
                       ? 'border-rose-300 bg-rose-50/50'
-                      : 'border-slate-200 bg-slate-50 focus-within:border-amber-500 focus-within:bg-white'
+                      : 'border-slate-200 bg-slate-50 focus-within:border-brand-600 focus-within:bg-white'
                   }`}
                 >
                   <span className="text-xs font-bold text-slate-400">Rp</span>
@@ -273,7 +273,7 @@ export default function CheckoutDialog({
                       key={amount}
                       type="button"
                       onClick={() => setAmountPaid(String(amount))}
-                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:border-amber-400 hover:bg-amber-50 hover:text-amber-800"
+                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:border-brand-400 hover:bg-brand-50 hover:text-brand-800"
                     >
                       {amount === totalAmount ? 'Uang Pas' : formatCurrency(amount)}
                     </button>
@@ -286,7 +286,7 @@ export default function CheckoutDialog({
                       key={digit}
                       type="button"
                       onClick={() => appendDigits(digit)}
-                      className="rounded-lg border border-slate-200 bg-white py-2 text-sm font-bold text-slate-700 transition-colors hover:border-amber-400 hover:bg-amber-50 active:scale-[0.98]"
+                      className="rounded-lg border border-slate-200 bg-white py-2 text-sm font-bold text-slate-700 transition-colors hover:border-brand-400 hover:bg-brand-50 active:scale-[0.98]"
                     >
                       {digit}
                     </button>
@@ -391,7 +391,7 @@ export default function CheckoutDialog({
               type="button"
               onClick={onConfirm}
               disabled={processing || (isCash && !isEnough)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-md shadow-amber-500/20 transition-all hover:bg-amber-400 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-700 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-brand-900/20 transition-all hover:bg-brand-600 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
             >
               {processing ? (
                 <>

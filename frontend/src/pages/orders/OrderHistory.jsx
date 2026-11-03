@@ -87,7 +87,7 @@ export default function OrderHistory() {
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
             <img
-              src="./public/icon_riwayat.png"
+              src="/icon_riwayat.png"
               alt="Icon Riwayat Transaksi"
               className="h-7 w-7 object-contain"
             />

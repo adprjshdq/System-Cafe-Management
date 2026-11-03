@@ -538,21 +538,6 @@ export default function PosPage() {
                 );
               })}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowAvailableOnly((previous) => !previous)}
-              aria-pressed={showAvailableOnly}
-              aria-label={showAvailableOnly ? 'Tampilkan semua menu' : 'Tampilkan hanya menu tersedia'}
-              title={showAvailableOnly ? 'Tampilkan semua menu' : 'Tampilkan hanya menu tersedia'}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${showAvailableOnly
-                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                }`}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Hanya tersedia</span>
-            </button>
           </div>
         </div>
 
@@ -571,7 +556,7 @@ export default function PosPage() {
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="mt-4 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 transition-colors hover:bg-amber-400"
+                  className="mt-4 rounded-xl bg-brand-700 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600"
                 >
                   Reset filter
                 </button>
@@ -629,9 +614,9 @@ export default function PosPage() {
       {/* Mobile: bar ringkasan + bottom sheet keranjang */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-3 py-2.5 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
             <img
-              src="./public/icon_keranjang.png"
+              src="/icon_keranjang.png"
               alt="Keranjang Pesanan"
               className="h-6 w-6 object-contain"
             />
@@ -783,7 +768,7 @@ export default function PosPage() {
                     <span className="text-[10px] text-slate-500">
                       {item.quantity} x {formatCurrency(item.unit_price || item.price)}
                     </span>
-                    {item.notes && <p className="text-[9px] italic text-amber-700">*{item.notes}</p>}
+                    {item.notes && <p className="text-[9px] italic text-brand-700">*{item.notes}</p>}
                   </div>
                   <span className="font-semibold">{formatCurrency(item.subtotal)}</span>
                 </div>
@@ -820,7 +805,7 @@ export default function PosPage() {
                   </div>
                 </>
               ) : (
-                <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-center font-sans text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                <div className="mt-2 rounded-lg border border-brand-300 bg-brand-50 px-2 py-1.5 text-center font-sans text-[10px] font-bold uppercase tracking-wide text-brand-800">
                   Belum dibayar · Bayar di kasir
                 </div>
               )}
@@ -863,7 +848,7 @@ export default function PosPage() {
           role="status"
           aria-live="polite"
           className={`animate-pos-toast fixed right-4 top-20 z-[60] flex max-w-xs items-start gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold shadow-lg ${toast.tone === 'warning'
-            ? 'border-amber-200 bg-amber-50 text-amber-800'
+            ? 'border-brand-200 bg-brand-50 text-brand-800'
             : 'border-emerald-200 bg-emerald-50 text-emerald-800'
             }`}
         >

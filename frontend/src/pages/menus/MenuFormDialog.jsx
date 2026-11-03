@@ -24,7 +24,7 @@ const readFileAsDataUrl = (file) =>
   });
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 disabled:opacity-60';
+  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-[#77422D] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#77422D]/10 disabled:opacity-60';
 
 const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700';
 
@@ -149,8 +149,8 @@ export default function MenuFormDialog({ menu, categories, onClose, onSave }) {
         : null;
       setFormError(
         firstFieldError ||
-          responseData?.message ||
-          'Gagal menyimpan menu. Periksa kembali data Anda.'
+        responseData?.message ||
+        'Gagal menyimpan menu. Periksa kembali data Anda.'
       );
     } finally {
       setSaving(false);
@@ -173,7 +173,7 @@ export default function MenuFormDialog({ menu, categories, onClose, onSave }) {
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#77422D] bg-[#F5EDE8] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#77422D]">
                 Katalog Menu
               </span>
               <h2 id="menu-form-title" className="mt-2 text-lg font-bold text-slate-900">
@@ -219,11 +219,10 @@ export default function MenuFormDialog({ menu, categories, onClose, onSave }) {
                     }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={handleDrop}
-                    className={`relative aspect-[4/3] overflow-hidden rounded-2xl border-2 border-dashed transition-colors ${
-                      dragging
-                        ? 'border-amber-500 bg-amber-50'
-                        : 'border-slate-200 bg-slate-100'
-                    }`}
+                    className={`relative aspect-[4/3] overflow-hidden rounded-2xl border-2 border-dashed transition-colors ${dragging
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-slate-200 bg-slate-100'
+                      }`}
                   >
                     <MenuThumbnail
                       menu={previewMenu}
@@ -301,14 +300,12 @@ export default function MenuFormDialog({ menu, categories, onClose, onSave }) {
                     </span>
                   </span>
                   <span
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                      formData.is_available ? 'bg-emerald-500' : 'bg-slate-300'
-                    }`}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${formData.is_available ? 'bg-emerald-500' : 'bg-slate-300'
+                      }`}
                   >
                     <span
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${
-                        formData.is_available ? 'left-[1.375rem]' : 'left-0.5'
-                      }`}
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${formData.is_available ? 'left-[1.375rem]' : 'left-0.5'
+                        }`}
                     />
                   </span>
                 </button>
@@ -319,11 +316,10 @@ export default function MenuFormDialog({ menu, categories, onClose, onSave }) {
                       Margin keuntungan
                     </span>
                     <span
-                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-extrabold ${
-                        hasPrice && margin.margin >= 0
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-rose-100 text-rose-700'
-                      }`}
+                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-extrabold ${hasPrice && margin.margin >= 0
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-rose-100 text-rose-700'
+                        }`}
                     >
                       {hasPrice ? `${margin.percent}%` : '—'}
                     </span>
@@ -469,7 +465,7 @@ export default function MenuFormDialog({ menu, categories, onClose, onSave }) {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#77422D] px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-[#653724] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#77422D] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {saving

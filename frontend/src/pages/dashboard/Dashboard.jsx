@@ -56,7 +56,7 @@ export default function Dashboard() {
       {/* Welcome Banner */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 uppercase tracking-wider">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#783F24] text-white uppercase tracking-wider">
             Operasional Hari Ini
           </span>
           <h1 className="text-2xl font-bold text-slate-900 mt-2">Selamat Datang di Aroma Cafe</h1>
@@ -76,7 +76,7 @@ export default function Dashboard() {
             to="/kitchen"
             className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium border border-slate-200 rounded-xl text-sm transition-all flex items-center gap-2"
           >
-            <Coffee className="w-4 h-4 text-amber-600" />
+            <Coffee className="w-4 h-4 text-amber-[#8B4513]" />
             <span>Monitor Dapur</span>
           </Link>
         </div>
@@ -88,8 +88,12 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Omzet Hari Ini</span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+              <img
+                src="/icon_omzet.png"
+                alt="Icon Omzet"
+                className="h-7 w-7 object-contain"
+              />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900 mt-2">
@@ -107,8 +111,12 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Pesanan Hari Ini</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+              <img
+                src="/pesanan.png"
+                alt="Icon Pesanan"
+                className="h-7 w-7 object-contain"
+              />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900 mt-2">
@@ -123,8 +131,12 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Antrean Dapur</span>
-            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <Coffee className="w-5 h-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+              <img
+                src="/antrean_kopi.png"
+                alt="Icon antrean dapur"
+                className="h-7 w-7 object-contain"
+              />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900 mt-2">
@@ -139,8 +151,12 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Keterisian Meja</span>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Grid className="w-5 h-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+              <img
+                src="/denah_meja.png"
+                alt="Icon ketesediaan meja"
+                className="h-7 w-7 object-contain"
+              />
             </div>
           </div>
           <p className="text-2xl font-extrabold text-slate-900 mt-2">
@@ -158,15 +174,19 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700">
-                <Flame className="w-5 h-5" />
+              <div className="p-1.5 rounded-lg bg-amber-0 flex items-center justify-center">
+                <img
+                  src="/api_top.png"
+                  alt="Menu Terlaris"
+                  className="w-8 h-8 object-contain"
+                />
               </div>
               <div>
                 <h3 className="font-bold text-slate-900">Menu Terlaris (Top 5)</h3>
                 <p className="text-xs text-slate-500">Berdasarkan volume penjualan kumulatif</p>
               </div>
             </div>
-            <Link to="/menus" className="text-xs font-semibold text-amber-600 hover:text-amber-700">
+            <Link to="/menus" className="text-xs font-semibold text-[#8B4513] hover:text-[#654321]">
               Lihat Semua Menu &rarr;
             </Link>
           </div>
@@ -184,7 +204,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-amber-600">{item.total_sold} terjual</span>
+                  <span className="text-sm font-semibold text-[#8B4513]">{item.total_sold} terjual</span>
                 </div>
               </div>
             ))}

@@ -75,15 +75,15 @@ export default function Login() {
             className="h-full w-full object-cover opacity-30"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-slate-950/50" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(245,158,11,0.18),transparent_48%)]" />
-          <div className="absolute -bottom-32 -right-28 h-[26rem] w-[26rem] rounded-full border border-amber-400/15" />
-          <div className="absolute -bottom-24 -right-20 h-80 w-80 rounded-full border border-amber-400/10" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(192,135,97,0.22),transparent_48%)]" />
+          <div className="absolute -bottom-32 -right-28 h-[26rem] w-[26rem] rounded-full border border-brand-400/15" />
+          <div className="absolute -bottom-24 -right-20 h-80 w-80 rounded-full border border-brand-400/10" />
         </div>
 
         <div className="animate-auth-rise relative z-10 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center">
             <img
-              src="./public/aroma_cafe.png"
+              src="/aroma_cafe.png"
               alt="SIMCAFE Logo"
               className="h-11 w-11 object-contain"
             />
@@ -113,7 +113,7 @@ export default function Login() {
           <ul className="mt-8 space-y-3.5">
             {FEATURES.map(({ icon: Icon, title, description }) => (
               <li key={title} className="flex items-start gap-3.5">
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-amber-300">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-400/25 bg-brand-500/10 text-brand-300">
                   <Icon className="h-4 w-4" />
                 </span>
                 <div>
@@ -139,7 +139,7 @@ export default function Login() {
       {/* Panel form */}
       <section className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-10 sm:px-8">
         <div
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl"
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-200/40 blur-3xl"
           aria-hidden="true"
         />
         <div
@@ -151,7 +151,7 @@ export default function Login() {
           <div className="animate-auth-rise rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-9">
             {/* Brand ringkas (mobile) */}
             <div className="mb-7 flex items-center gap-3 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-700 text-white shadow-md shadow-brand-900/25">
                 <Coffee className="h-5 w-5" />
               </div>
               <div>
@@ -203,7 +203,7 @@ export default function Login() {
                     aria-invalid={errorMsg ? 'true' : undefined}
                     aria-describedby={errorMsg ? 'login-error' : undefined}
                     placeholder="nama@cafe.com"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 disabled:opacity-60"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-600/10 disabled:opacity-60"
                   />
                 </div>
               </div>
@@ -228,14 +228,14 @@ export default function Login() {
                     aria-invalid={errorMsg ? 'true' : undefined}
                     aria-describedby={errorMsg ? 'login-error' : undefined}
                     placeholder="Masukkan kata sandi"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 disabled:opacity-60"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-12 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-600/10 disabled:opacity-60"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((previous) => !previous)}
                     aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                     aria-pressed={showPassword}
-                    className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+                    className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/40"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />

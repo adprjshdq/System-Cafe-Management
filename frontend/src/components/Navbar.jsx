@@ -47,7 +47,7 @@ export default function Navbar({ title, onOpenSidebar }) {
         <div className="hidden h-6 w-px bg-slate-200 sm:block"></div>
 
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs">
+          <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center text-xs">
             {user?.name ? user.name[0].toUpperCase() : 'U'}
           </div>
           <div className="hidden md:block text-left text-xs">

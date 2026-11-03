@@ -9,6 +9,11 @@ export const AREA_META = {
   },
 };
 
+export const AREA_IMAGE = {
+  indoor: '/indoor.png',
+  outdoor: '/outdoor.png',
+};
+
 export const TABLE_STATUS = {
   available: {
     label: 'Tersedia',

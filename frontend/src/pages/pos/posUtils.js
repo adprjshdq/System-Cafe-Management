@@ -24,14 +24,14 @@ export const getMenuStatus = (menu) => {
 
 export const STATUS_TONE_CLASSES = {
   emerald: 'bg-white/95 text-emerald-700 border-emerald-200',
-  amber: 'bg-white/95 text-amber-700 border-amber-200',
+  amber: 'bg-white/95 text-brand-700 border-brand-200',
   rose: 'bg-white/95 text-rose-700 border-rose-200',
   slate: 'bg-white/95 text-slate-600 border-slate-200',
 };
 
 export const STATUS_DOT_CLASSES = {
   emerald: 'bg-emerald-500',
-  amber: 'bg-amber-500',
+  amber: 'bg-brand-600',
   rose: 'bg-rose-500',
   slate: 'bg-slate-400',
 };

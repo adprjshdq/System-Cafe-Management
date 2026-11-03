@@ -3,24 +3,17 @@ import {
   AlertCircle,
   Armchair,
   Loader2,
-  Sun,
-  Trees,
   Users,
   X,
 } from 'lucide-react';
-import { AREA_META } from './tableUtils';
+import { AREA_IMAGE, AREA_META } from './tableUtils';
 
 const CAPACITY_PRESETS = [2, 4, 6, 8];
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/10';
+  'w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-[#77422D] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#77422D]/10';
 
 const labelClass = 'mb-1.5 block text-xs font-semibold text-slate-700';
-
-const AREA_ICON = {
-  indoor: Sun,
-  outdoor: Trees,
-};
 
 export default function AddTableDialog({ onClose, onSave }) {
   const [form, setForm] = useState({
@@ -76,8 +69,8 @@ export default function AddTableDialog({ onClose, onSave }) {
 
       setFormError(
         firstFieldError ||
-          responseData?.message ||
-          'Gagal menambahkan meja. Periksa kembali data Anda.'
+        responseData?.message ||
+        'Gagal menambahkan meja. Periksa kembali data Anda.'
       );
     } finally {
       setSaving(false);
@@ -100,7 +93,7 @@ export default function AddTableDialog({ onClose, onSave }) {
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
             <div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#77422D] bg-[#F5EDE8] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#77422D]">
                 Denah Meja
               </span>
               <h2 id="add-table-title" className="mt-2 text-lg font-bold text-slate-900">
@@ -165,7 +158,6 @@ export default function AddTableDialog({ onClose, onSave }) {
                 <span className={labelClass}>Area Meja</span>
                 <div className="grid grid-cols-2 gap-2" role="group" aria-label="Pilih area meja">
                   {Object.entries(AREA_META).map(([value, meta]) => {
-                    const Icon = AREA_ICON[value] || Armchair;
                     const active = form.area === value;
                     return (
                       <button
@@ -175,20 +167,23 @@ export default function AddTableDialog({ onClose, onSave }) {
                           setForm((previous) => ({ ...previous, area: value }))
                         }
                         aria-pressed={active}
-                        className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${
-                          active
-                            ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600/30'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                        }`}
+                        className={`flex items-start gap-2.5 rounded-xl border p-3 text-left transition-colors ${active
+                          ? 'border-brand-600 bg-brand-50 ring-1 ring-brand-600/30'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                          }`}
                       >
                         <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                            active
-                              ? 'bg-brand-700 text-white'
-                              : 'bg-slate-100 text-slate-500'
-                          }`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${active
+                            ? 'bg-brand-100'
+                            : 'bg-slate-100'
+                            }`}
                         >
-                          <Icon className="h-4 w-4" />
+                          <img
+                            src={AREA_IMAGE[value]}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-5 w-5 object-contain"
+                          />
                         </span>
                         <span className="min-w-0">
                           <span className="block text-xs font-bold text-slate-900">
@@ -220,11 +215,10 @@ export default function AddTableDialog({ onClose, onSave }) {
                           }))
                         }
                         aria-pressed={active}
-                        className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${
-                          active
-                            ? 'border-brand-700 bg-brand-700 text-white'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                        }`}
+                        className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${active
+                          ? 'border-brand-700 bg-brand-700 text-white'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
                       >
                         <Users className="h-3.5 w-3.5" />
                         {value}
@@ -295,7 +289,7 @@ export default function AddTableDialog({ onClose, onSave }) {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-sm transition-colors hover:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#77422D] px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition-colors hover:bg-[#653724] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#77422D] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {saving ? 'Menyimpan...' : 'Simpan Meja'}

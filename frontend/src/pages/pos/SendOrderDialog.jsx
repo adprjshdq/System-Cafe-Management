@@ -128,7 +128,7 @@ export default function SendOrderDialog({
               </div>
               <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
                 <span className="text-xs font-bold text-slate-900">Total Tagihan</span>
-                <span className="text-base font-extrabold text-amber-600">
+                <span className="text-base font-extrabold text-brand-700">
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
@@ -141,7 +141,7 @@ export default function SendOrderDialog({
                 Meja Tujuan
               </p>
               <p className="mt-1 flex items-center gap-2 text-lg font-extrabold text-slate-900">
-                <UtensilsCrossed className="h-4 w-4 text-amber-500" />
+                <UtensilsCrossed className="h-4 w-4 text-brand-600" />
                 {selectedTable?.table_number || 'Belum dipilih'}
               </p>
               <p className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
@@ -166,12 +166,12 @@ export default function SendOrderDialog({
               </div>
             )}
 
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3">
-              <p className="flex items-center gap-1.5 text-[11px] font-bold text-amber-800">
+            <div className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-3">
+              <p className="flex items-center gap-1.5 text-[11px] font-bold text-brand-800">
                 <Wallet className="h-3.5 w-3.5" />
                 Tanpa pembayaran
               </p>
-              <p className="mt-1 text-[10px] leading-relaxed text-amber-700">
+              <p className="mt-1 text-[10px] leading-relaxed text-brand-700">
                 Pesanan langsung masuk ke antrian dapur. Pembayaran dilakukan pelanggan di kasir.
               </p>
             </div>

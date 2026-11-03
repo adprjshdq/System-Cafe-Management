@@ -349,8 +349,8 @@ export default function KitchenDisplay() {
               {urgencyMeta.badge && (
                 <span
                   className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${urgency === 'late'
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-amber-400 text-slate-950'
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-amber-400 text-slate-950'
                     }`}
                 >
                   <AlertTriangle className="h-3 w-3" />
@@ -601,8 +601,12 @@ export default function KitchenDisplay() {
         <div className="fixed inset-0 z-50 flex min-h-0 flex-col gap-3 overflow-hidden bg-white p-3 sm:p-4 xl:gap-4 xl:p-6">
           <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20">
-                <ChefHat className="h-6 w-6" />
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-0 shadow-lg shadow-amber-500/20">
+                <img
+                  src="/kitchen.png"
+                  alt="Kitchen Display"
+                  className="h-7 w-7 object-contain"
+                />
               </span>
               <div>
                 <p className="text-lg font-extrabold leading-tight text-slate-900 xl:text-2xl">
@@ -621,8 +625,8 @@ export default function KitchenDisplay() {
               </span>
               <span
                 className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold xl:text-sm ${lateCount > 0
-                    ? 'border-rose-300 bg-rose-50 text-rose-600'
-                    : 'border-slate-200 bg-slate-50 text-slate-400'
+                  ? 'border-rose-300 bg-rose-50 text-rose-600'
+                  : 'border-slate-200 bg-slate-50 text-slate-400'
                   }`}
               >
                 <AlertTriangle className="h-4 w-4" />
@@ -630,8 +634,8 @@ export default function KitchenDisplay() {
               </span>
               <span
                 className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold xl:text-sm ${warningCount > 0
-                    ? 'border-amber-300 bg-amber-50 text-amber-600'
-                    : 'border-slate-200 bg-slate-50 text-slate-400'
+                  ? 'border-amber-300 bg-amber-50 text-amber-600'
+                  : 'border-slate-200 bg-slate-50 text-slate-400'
                   }`}
               >
                 <Clock className="h-4 w-4" />
@@ -650,7 +654,7 @@ export default function KitchenDisplay() {
               <button
                 type="button"
                 onClick={() => setKiosk(false)}
-                className="flex h-10 items-center gap-2 rounded-xl bg-amber-500 px-3 text-xs font-extrabold text-slate-950 transition-colors hover:bg-amber-400"
+                className="flex h-10 items-center gap-2 rounded-xl bg-[#77422D] px-3 text-xs font-extrabold text-white transition-colors hover:bg-[#653724]"
               >
                 <Minimize2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Keluar</span>
@@ -679,7 +683,7 @@ export default function KitchenDisplay() {
             <div>
               <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
                 <img
-                  src="./public/kitchen.png"
+                  src="/kitchen.png"
                   alt="Icon kitchen"
                   className="h-7 w-7 object-contain"
                 />
@@ -696,7 +700,7 @@ export default function KitchenDisplay() {
               <button
                 type="button"
                 onClick={() => setKiosk(true)}
-                className="flex h-10 items-center gap-2 rounded-xl bg-slate-900 px-3.5 text-xs font-extrabold text-white transition-colors hover:bg-slate-800"
+                className="flex h-10 items-center gap-2 rounded-xl bg-[#77422D] px-3.5 text-xs font-extrabold text-white transition-colors hover:bg-[#653724]"
               >
                 <Maximize2 className="h-4 w-4" />
                 <span>Mode Monitor</span>

@@ -259,7 +259,7 @@ export default function MenuManagement() {
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
             <img
-              src="./public/menu.png"
+              src="/menu.png"
               alt="Icon Katalog Menu"
               className="h-7 w-7 object-contain"
             />
