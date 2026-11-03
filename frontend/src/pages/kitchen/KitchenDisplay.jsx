@@ -601,7 +601,7 @@ export default function KitchenDisplay() {
         <div className="fixed inset-0 z-50 flex min-h-0 flex-col gap-3 overflow-hidden bg-white p-3 sm:p-4 xl:gap-4 xl:p-6">
           <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-0 shadow-lg shadow-amber-500/20">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 shadow-lg shadow-brand-900/20">
                 <img
                   src="/kitchen.png"
                   alt="Kitchen Display"

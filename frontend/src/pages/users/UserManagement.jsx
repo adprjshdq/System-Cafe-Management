@@ -319,7 +319,7 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Total Staf</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
               <img
                 src="/icon_user.png"
                 alt="Total Staf"
@@ -334,7 +334,7 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Admin</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
               <img
                 src="/admin.png"
                 alt="Admin"
@@ -349,7 +349,7 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Kasir</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
               <img
                 src="/menu.png"
                 alt="Kasir"
@@ -364,7 +364,7 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Dapur / Barista</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
               <img
                 src="/kitchen.png"
                 alt="Dapur / Barista"
@@ -379,7 +379,7 @@ export default function UserManagement() {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm col-span-2 md:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">Waiter</span>
-            <div className="w-8 h-8 rounded-lg bg-slate-0 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
               <img
                 src="/waiters.png"
                 alt="Waiter"
@@ -601,9 +601,9 @@ export default function UserManagement() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-slate-100">
               <div className="flex items-center space-x-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-0 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
                   <img
-                    src={editingUser ? "/icon_user_edit.png" : "/icon_user.png"}
+                    src="/icon_user.png"
                     alt="Pengguna"
                     className="w-6 h-6 object-contain"
                   />

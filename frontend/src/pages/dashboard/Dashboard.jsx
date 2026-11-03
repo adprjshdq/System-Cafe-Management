@@ -88,7 +88,7 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Omzet Hari Ini</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
               <img
                 src="/icon_omzet.png"
                 alt="Icon Omzet"
@@ -111,7 +111,7 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Pesanan Hari Ini</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
               <img
                 src="/pesanan.png"
                 alt="Icon Pesanan"
@@ -131,7 +131,7 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Antrean Dapur</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
               <img
                 src="/antrean_kopi.png"
                 alt="Icon antrean dapur"
@@ -151,7 +151,7 @@ export default function Dashboard() {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase">Keterisian Meja</span>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
               <img
                 src="/denah_meja.png"
                 alt="Icon ketesediaan meja"
@@ -174,7 +174,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-amber-0 flex items-center justify-center">
+              <div className="p-1.5 rounded-lg bg-brand-50 flex items-center justify-center">
                 <img
                   src="/api_top.png"
                   alt="Menu Terlaris"
