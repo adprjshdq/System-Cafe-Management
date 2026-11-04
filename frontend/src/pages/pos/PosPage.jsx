@@ -1,15 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ShoppingBag,
   Printer,
   X,
   CheckCircle2,
   AlertCircle,
   ChevronUp,
-  LayoutGrid,
   Search,
   Send,
-  SlidersHorizontal,
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -21,43 +18,17 @@ import CartPanel from './CartPanel';
 import CheckoutDialog from './CheckoutDialog';
 import SendOrderDialog from './SendOrderDialog';
 import { getMenuStatus, STATUS_DOT_CLASSES } from './posUtils';
-
-// Fallback initial menus if server is initializing
-const fallbackMenus = [
-  { id: 1, name: 'Espresso Single', category_id: 1, price: 18000, stock: 40, is_available: true, description: 'Arabika single shot' },
-  { id: 2, name: 'Iced Americano', category_id: 1, price: 22000, stock: 35, is_available: true, description: 'Espresso & es segar' },
-  { id: 3, name: 'Caramel Macchiato', category_id: 1, price: 28000, stock: 25, is_available: true, description: 'Espresso, susu, saus karamel' },
-  { id: 4, name: 'Kopi Susu Aren', category_id: 1, price: 24000, stock: 30, is_available: true, description: 'Aren organik creamy' },
-  { id: 5, name: 'Matcha Latte', category_id: 2, price: 27000, stock: 18, is_available: true, description: 'Matcha murni Uji Jepang' },
-  { id: 6, name: 'Signature Chocolate', category_id: 2, price: 26000, stock: 22, is_available: true, description: 'Cokelat Belgia pekat' },
-  { id: 7, name: 'Nasi Goreng Kampung', category_id: 3, price: 32000, stock: 15, is_available: true, description: 'Telur ceplok & ayam' },
-  { id: 8, name: 'Spaghetti Carbonara', category_id: 3, price: 38000, stock: 10, is_available: true, description: 'Smoked beef & parmesan' },
-  { id: 9, name: 'Crispy French Fries', category_id: 4, price: 20000, stock: 20, is_available: true, description: 'Kentang renyah + saus' },
-  { id: 10, name: 'Butter Croissant', category_id: 4, price: 22000, stock: 4, is_available: true, description: 'Flaky butter pastry' },
-];
-
-const fallbackTables = [
-  { id: 1, table_number: 'Meja 01', status: 'available' },
-  { id: 2, table_number: 'Meja 02', status: 'available' },
-  { id: 3, table_number: 'Meja 03', status: 'occupied' },
-  { id: 4, table_number: 'Meja 04', status: 'available' },
-  { id: 5, table_number: 'Meja 05', status: 'available' },
-  { id: 6, table_number: 'Outdoor 01', status: 'available' },
-];
+import DataStateNotice from '../../components/DataStateNotice';
 
 export default function PosPage() {
-  const [menus, setMenus] = useState(fallbackMenus);
-  const [categories, setCategories] = useState([
-    { id: 'all', name: 'Semua Kategori' },
-    { id: 1, name: 'Coffee Series', slug: 'coffee' },
-    { id: 2, name: 'Non-Coffee', slug: 'non-coffee' },
-    { id: 3, name: 'Main Course', slug: 'main-course' },
-    { id: 4, name: 'Snacks & Pastry', slug: 'snacks' },
-  ]);
-  const [tables, setTables] = useState(fallbackTables);
+  const [menus, setMenus] = useState([]);
+  const [categories, setCategories] = useState([{ id: 'all', name: 'Semua Kategori' }]);
+  const [tables, setTables] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   // Layout
   const [isCartExpanded, setIsCartExpanded] = useState(false);
@@ -97,6 +68,7 @@ export default function PosPage() {
     updateItemNotes,
     removeFromCart,
     clearCart,
+    syncWithCatalog,
   } = useCart();
 
   const { role } = useAuth();
@@ -105,6 +77,7 @@ export default function PosPage() {
   const effectiveOrderType = isWaiter ? 'dine_in' : orderType;
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       const [menuRes, catRes, tableRes] = await Promise.all([
         api.get('/v1/menus'),
@@ -112,15 +85,29 @@ export default function PosPage() {
         api.get('/v1/tables'),
       ]);
 
-      if (menuRes.data?.data?.length) setMenus(menuRes.data.data);
-      if (catRes.data?.data?.length) {
-        setCategories([{ id: 'all', name: 'Semua Kategori' }, ...catRes.data.data]);
-      }
-      if (tableRes.data?.data?.length) setTables(tableRes.data.data);
+      const menuList = Array.isArray(menuRes.data?.data) ? menuRes.data.data : [];
+      const categoryList = Array.isArray(catRes.data?.data) ? catRes.data.data : [];
+      const tableList = Array.isArray(tableRes.data?.data) ? tableRes.data.data : [];
+
+      setMenus(menuList);
+      setCategories([{ id: 'all', name: 'Semua Kategori' }, ...categoryList]);
+      setTables(tableList);
+      // Draft dari refresh bisa berisi harga/stok lama; samakan dengan katalog.
+      syncWithCatalog({ menus: menuList, tables: tableList });
+      setLoadError('');
     } catch (e) {
-      console.warn('API error, using demo menus:', e);
+      console.error('Gagal memuat data katalog POS:', e);
+      setMenus([]);
+      setCategories([{ id: 'all', name: 'Semua Kategori' }]);
+      setTables([]);
+      setLoadError(
+        e.response?.data?.message ||
+          'Server tidak dapat dihubungi. Katalog menu dan daftar meja dikosongkan sampai data berhasil dimuat.'
+      );
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [syncWithCatalog]);
 
   useEffect(() => {
     fetchData();
@@ -305,13 +292,6 @@ export default function PosPage() {
     setProcessing(true);
     setSendOrderError('');
 
-    const orderSnapshot = {
-      items: [...cartItems],
-      subtotal,
-      taxAmount,
-      totalAmount,
-    };
-
     try {
       const res = await api.post('/v1/orders', payload);
       if (res.data?.success) {
@@ -322,35 +302,11 @@ export default function PosPage() {
         fetchData();
       }
     } catch (err) {
-      if (err.response) {
-        setSendOrderError(
-          err.response.data?.message || 'Pesanan gagal dikirim. Silakan coba lagi.'
-        );
-        fetchData();
-        return;
-      }
-
-      // Fallback preview jika server tidak dapat dijangkau.
-      const mockInvoice =
-        'INV-' +
-        new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-        '-' +
-        Math.floor(1000 + Math.random() * 9000);
-      setCompletedOrder({
-        order_number: mockInvoice,
-        customer_name: customerName || 'Tamu Meja',
-        order_type: 'dine_in',
-        created_at: new Date().toISOString(),
-        table: selectedTable,
-        items: orderSnapshot.items,
-        subtotal: orderSnapshot.subtotal,
-        tax_amount: orderSnapshot.taxAmount,
-        total_amount: orderSnapshot.totalAmount,
-        payment: null,
-      });
-      setIsSendOrderOpen(false);
-      setIsReceiptOpen(true);
-      clearCart();
+      setSendOrderError(
+        err.response?.data?.message ||
+          'Server tidak dapat dihubungi. Pesanan belum terkirim, silakan coba lagi.'
+      );
+      if (err.response) fetchData();
     } finally {
       setProcessing(false);
     }
@@ -384,15 +340,6 @@ export default function PosPage() {
     setProcessing(true);
     setCheckoutError('');
 
-    // Simpan snapshot untuk fallback struk saat offline.
-    const orderSnapshot = {
-      items: [...cartItems],
-      subtotal,
-      taxAmount,
-      totalAmount,
-      paidNum,
-    };
-
     try {
       const res = await api.post('/v1/orders', payload);
       if (res.data?.success) {
@@ -403,41 +350,12 @@ export default function PosPage() {
         fetchData();
       }
     } catch (err) {
-      if (err.response) {
-        setCheckoutError(
-          err.response.data?.message || 'Pembayaran gagal diproses. Silakan coba lagi.'
-        );
-        // Segarkan stok/ketersediaan menu agar badge di katalog ikut terbarui.
-        fetchData();
-        return;
-      }
-
-      // Fallback preview receipt jika server tidak dapat dijangkau.
-      const mockInvoice =
-        'INV-' +
-        new Date().toISOString().slice(0, 10).replace(/-/g, '') +
-        '-' +
-        Math.floor(1000 + Math.random() * 9000);
-      const mockResult = {
-        order_number: mockInvoice,
-        customer_name: customerName || 'Pelanggan Walk-In',
-        order_type: orderType,
-        created_at: new Date().toISOString(),
-        table: selectedTable,
-        items: orderSnapshot.items,
-        subtotal: orderSnapshot.subtotal,
-        tax_amount: orderSnapshot.taxAmount,
-        total_amount: orderSnapshot.totalAmount,
-        payment: {
-          payment_method: paymentMethod,
-          amount_paid: orderSnapshot.paidNum,
-          change_amount: Math.max(0, orderSnapshot.paidNum - orderSnapshot.totalAmount),
-        },
-      };
-      setCompletedOrder(mockResult);
-      setIsCheckoutOpen(false);
-      setIsReceiptOpen(true);
-      clearCart();
+      setCheckoutError(
+        err.response?.data?.message ||
+          'Server tidak dapat dihubungi. Pembayaran belum diproses, silakan coba lagi.'
+      );
+      // Segarkan stok/ketersediaan menu agar badge di katalog ikut terbarui.
+      if (err.response) fetchData();
     } finally {
       setProcessing(false);
     }
@@ -456,7 +374,7 @@ export default function PosPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
                   <img
-                    src="./menu.png"
+                    src="/menu.png"
                     alt="Icon Menu"
                     className="h-7 w-7 object-contain"
                   />
@@ -495,6 +413,15 @@ export default function PosPage() {
               </span>
             </div>
           </div>
+
+          {loadError && (
+            <DataStateNotice
+              title="Katalog POS gagal dimuat"
+              message={loadError}
+              onRetry={fetchData}
+              retrying={loading}
+            />
+          )}
 
           <SearchBox
             query={searchQuery}
@@ -548,11 +475,24 @@ export default function PosPage() {
               <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
                 <Search className="h-7 w-7" />
               </span>
-              <h3 className="text-sm font-bold text-slate-700">Menu tidak ditemukan</h3>
+              <h3 className="text-sm font-bold text-slate-700">
+                {menus.length === 0 ? 'Belum ada menu tersedia' : 'Menu tidak ditemukan'}
+              </h3>
               <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-400">
-                Coba kata kunci lain atau reset filter untuk melihat semua menu.
+                {menus.length === 0
+                  ? 'Katalog menu akan tampil setelah data berhasil dimuat dari server.'
+                  : 'Coba kata kunci lain atau reset filter untuk melihat semua menu.'}
               </p>
-              {hasActiveFilter && (
+              {menus.length === 0 && !loadError ? (
+                <button
+                  type="button"
+                  onClick={fetchData}
+                  disabled={loading}
+                  className="mt-4 rounded-xl bg-brand-700 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {loading ? 'Memuat...' : 'Muat ulang katalog'}
+                </button>
+              ) : hasActiveFilter && (
                 <button
                   type="button"
                   onClick={handleResetFilters}

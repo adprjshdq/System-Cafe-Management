@@ -1,53 +1,56 @@
-import React, { useState, useEffect } from 'react';
-import {
-  TrendingUp,
-  ShoppingBag,
-  Users,
-  Grid,
-  ArrowUpRight,
-  Coffee,
-  Flame,
-  Receipt
-} from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ShoppingBag, Coffee, Receipt } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
+import DataStateNotice from '../../components/DataStateNotice';
+
+const EMPTY_STATS = {
+  summary: {
+    revenue_today: 0,
+    revenue_month: 0,
+    orders_today: 0,
+    active_orders: 0,
+    total_tables: 0,
+    occupied_tables: 0,
+  },
+  top_menus: [],
+};
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    summary: {
-      revenue_today: 1450000,
-      revenue_month: 28900000,
-      orders_today: 42,
-      active_orders: 5,
-      total_tables: 8,
-      occupied_tables: 4,
-    },
-    top_menus: [
-      { menu_id: 4, total_sold: 28, menu: { name: 'Kopi Susu Gula Aren', price: 24000 } },
-      { menu_id: 2, total_sold: 21, menu: { name: 'Iced Americano', price: 22000 } },
-      { menu_id: 7, total_sold: 18, menu: { name: 'Nasi Goreng Kampung Spesial', price: 32000 } },
-      { menu_id: 5, total_sold: 15, menu: { name: 'Matcha Latte', price: 27000 } },
-      { menu_id: 9, total_sold: 14, menu: { name: 'Crispy French Fries', price: 20000 } },
-    ],
-  });
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/v1/dashboard/stats');
+      if (res.data?.success && res.data.data?.summary) {
+        setStats({
+          summary: res.data.data.summary,
+          top_menus: Array.isArray(res.data.data.top_menus) ? res.data.data.top_menus : [],
+        });
+        setError('');
+      } else {
+        setStats(EMPTY_STATS);
+        setError('Respons server tidak berisi data ringkasan.');
+      }
+    } catch (err) {
+      console.error('Gagal memuat statistik dashboard:', err);
+      setStats(EMPTY_STATS);
+      setError(
+        err.response?.data?.message ||
+          'Server tidak dapat dihubungi. Angka ditampilkan 0 sampai data berhasil dimuat.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await api.get('/v1/dashboard/stats');
-        if (res.data?.success && res.data.data?.summary) {
-          setStats(res.data.data);
-        }
-      } catch (err) {
-        console.warn('Menggunakan data sampel dashboard untuk presentasi:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   const { summary, top_menus } = stats;
 
@@ -76,11 +79,20 @@ export default function Dashboard() {
             to="/kitchen"
             className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-medium border border-slate-200 rounded-xl text-sm transition-all flex items-center gap-2"
           >
-            <Coffee className="w-4 h-4 text-amber-[#8B4513]" />
+            <Coffee className="w-4 h-4 text-brand-700" />
             <span>Monitor Dapur</span>
           </Link>
         </div>
       </div>
+
+      {error && (
+        <DataStateNotice
+          title="Statistik dashboard gagal dimuat"
+          message={error}
+          onRetry={fetchStats}
+          retrying={loading}
+        />
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -99,11 +111,8 @@ export default function Dashboard() {
           <p className="text-2xl font-extrabold text-slate-900 mt-2">
             {formatCurrency(summary.revenue_today)}
           </p>
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <span className="text-emerald-600 font-semibold flex items-center">
-              <ArrowUpRight className="w-3.5 h-3.5" /> +12%
-            </span>
-            <span>dibanding kemarin</span>
+          <p className="text-xs text-slate-500 mt-1">
+            Akumulasi pembayaran lunas hari ini
           </p>
         </div>
 
@@ -192,7 +201,15 @@ export default function Dashboard() {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {top_menus.map((item, idx) => (
+            {top_menus.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 px-6 py-10 text-center">
+                <p className="text-sm font-bold text-slate-700">Belum ada penjualan</p>
+                <p className="max-w-xs text-xs text-slate-500">
+                  Menu terlaris akan muncul setelah ada transaksi yang tercatat.
+                </p>
+              </div>
+            ) : (
+              top_menus.map((item, idx) => (
               <div key={item.menu_id || idx} className="py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center">
@@ -207,7 +224,8 @@ export default function Dashboard() {
                   <span className="text-sm font-semibold text-[#8B4513]">{item.total_sold} terjual</span>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
 

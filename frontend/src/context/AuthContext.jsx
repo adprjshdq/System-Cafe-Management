@@ -5,8 +5,13 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('cafe_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('cafe_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      // Data sesi rusak: mulai dari kondisi belum login.
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('cafe_token'));
   const [loading, setLoading] = useState(false);
@@ -49,33 +54,12 @@ export const AuthProvider = ({ children }) => {
         throw error;
       }
 
-      // Demo / Offline fallback untuk keperluan presentasi jika DB MySQL belum dinyalakan di XAMPP/Laragon
-      console.warn('Backend API uncontactable, using demo auth mode:', error);
-      let demoRole = 'admin';
-      let demoName = 'Demo Admin';
-      if (email.includes('kasir')) {
-        demoRole = 'cashier';
-        demoName = 'Budi Kasir';
-      } else if (email.includes('dapur')) {
-        demoRole = 'kitchen';
-        demoName = 'Chef Dapur';
-      } else if (email.includes('pelayan')) {
-        demoRole = 'waiter';
-        demoName = 'Siti Pelayan';
-      }
-
-      const mockUser = {
-        id: 99,
-        name: demoName,
-        email: email,
-        role: demoRole,
-      };
-      const mockToken = 'mock_jwt_token_demo_mode';
-      setUser(mockUser);
-      setToken(mockToken);
-      localStorage.setItem('cafe_user', JSON.stringify(mockUser));
-      localStorage.setItem('cafe_token', mockToken);
-      return { success: true, user: mockUser, isDemo: true };
+      // Backend tidak terjangkau: jangan membuat sesi demo palsu. Pengguna harus
+      // tahu bahwa login gagal karena server/DB belum siap.
+      console.error('Backend API tidak dapat dihubungi saat login:', error);
+      throw new Error(
+        'Tidak dapat terhubung ke server. Pastikan backend Laravel dan database MySQL sudah berjalan, lalu coba lagi.'
+      );
     } finally {
       setLoading(false);
     }
@@ -83,7 +67,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      if (token && token !== 'mock_jwt_token_demo_mode') {
+      if (token) {
         await api.post('/v1/auth/logout');
       }
     } catch (e) {
@@ -97,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, role: user?.role, login, logout, loading, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, token, role: user?.role, login, logout, loading, isAuthenticated: !!user && !!token }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -10,33 +10,17 @@ import {
   Search,
   SearchX,
   Trash2,
-  UtensilsCrossed,
   X,
   XCircle,
 } from 'lucide-react';
 import api from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import MenuThumbnail from '../../components/MenuThumbnail';
+import DataStateNotice from '../../components/DataStateNotice';
 import MenuCard from './MenuCard';
 import MenuFormDialog from './MenuFormDialog';
 import ConfirmDialog from './ConfirmDialog';
 import { getMargin, getStockState } from './menuUtils';
-
-const sampleMenus = [
-  { id: 1, name: 'Espresso Single', category: { name: 'Coffee' }, category_id: 1, price: 18000, cost_price: 7000, stock: 40, is_available: true, description: 'Arabika single shot' },
-  { id: 2, name: 'Iced Americano', category: { name: 'Coffee' }, category_id: 1, price: 22000, cost_price: 8000, stock: 35, is_available: true, description: 'Espresso & es segar' },
-  { id: 3, name: 'Caramel Macchiato', category: { name: 'Coffee' }, category_id: 1, price: 28000, cost_price: 12000, stock: 25, is_available: true, description: 'Espresso, susu, saus karamel' },
-  { id: 4, name: 'Kopi Susu Gula Aren', category: { name: 'Coffee' }, category_id: 1, price: 24000, cost_price: 9000, stock: 30, is_available: true, description: 'Aren organik creamy' },
-  { id: 5, name: 'Matcha Latte', category: { name: 'Non-Coffee' }, category_id: 2, price: 27000, cost_price: 11000, stock: 18, is_available: true, description: 'Matcha murni Uji Jepang' },
-  { id: 6, name: 'Nasi Goreng Kampung', category: { name: 'Main Course' }, category_id: 3, price: 32000, cost_price: 14000, stock: 15, is_available: true, description: 'Telur ceplok & ayam' },
-];
-
-const defaultCategories = [
-  { id: 1, name: 'Coffee' },
-  { id: 2, name: 'Non-Coffee' },
-  { id: 3, name: 'Main Course' },
-  { id: 4, name: 'Snacks' },
-];
 
 const STOCK_TEXT_TONE = {
   success: 'text-emerald-600',
@@ -46,8 +30,8 @@ const STOCK_TEXT_TONE = {
 };
 
 export default function MenuManagement() {
-  const [menus, setMenus] = useState(sampleMenus);
-  const [categories, setCategories] = useState(defaultCategories);
+  const [menus, setMenus] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [availability, setAvailability] = useState('all');
@@ -60,31 +44,44 @@ export default function MenuManagement() {
   const [deleting, setDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const fetchMenus = async () => {
     try {
       const res = await api.get('/v1/menus');
-      if (Array.isArray(res.data?.data)) setMenus(res.data.data);
+      const list = Array.isArray(res.data?.data) ? res.data.data : [];
+      setMenus(list);
+      setLoadError('');
     } catch (error) {
-      console.warn('API menu tidak tersedia, menggunakan data contoh:', error);
+      console.error('Gagal memuat data menu:', error);
+      setMenus([]);
+      setLoadError(
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Daftar menu dikosongkan sampai data berhasil dimuat.'
+      );
     }
   };
 
   const fetchCategories = async () => {
     try {
       const res = await api.get('/v1/categories');
-      if (Array.isArray(res.data?.data) && res.data.data.length > 0) {
-        setCategories(res.data.data);
-      }
+      setCategories(Array.isArray(res.data?.data) ? res.data.data : []);
     } catch (error) {
-      console.warn('API kategori tidak tersedia, menggunakan data contoh:', error);
+      console.error('Gagal memuat kategori menu:', error);
+      setCategories([]);
     }
   };
 
-  useEffect(() => {
-    fetchMenus();
-    fetchCategories();
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchMenus(), fetchCategories()]);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
 
   useEffect(() => {
     localStorage.setItem('menu_view', view);
@@ -154,7 +151,7 @@ export default function MenuManagement() {
     setEditingMenu(null);
   };
 
-  const handleSaveMenu = async (payload, meta = {}) => {
+  const handleSaveMenu = async (payload) => {
     try {
       if (editingMenu) {
         await api.post(`/v1/menus/${editingMenu.id}`, payload);
@@ -170,29 +167,11 @@ export default function MenuManagement() {
       // Error dari server diteruskan ke form agar dialog tetap terbuka.
       if (error.response) throw error;
 
-      // Fallback lokal saat backend tidak terjangkau (mode demo).
-      const category = categories.find(
-        (item) => String(item.id) === String(payload.category_id)
+      showToast(
+        'error',
+        'Server tidak dapat dihubungi. Menu belum tersimpan, silakan coba lagi.'
       );
-      const localMenu = {
-        ...payload,
-        is_available: Boolean(payload.is_available),
-        image_path: meta.preview || editingMenu?.image_path || null,
-        category: category
-          ? { id: category.id, name: category.name }
-          : { name: 'Umum' },
-      };
-
-      if (editingMenu) {
-        setMenus((previous) =>
-          previous.map((menu) =>
-            menu.id === editingMenu.id ? { ...menu, ...localMenu } : menu
-          )
-        );
-      } else {
-        setMenus((previous) => [{ id: Date.now(), ...localMenu }, ...previous]);
-      }
-      showToast('success', 'Perubahan disimpan secara lokal (mode demo).');
+      throw error;
     }
   };
 
@@ -210,19 +189,11 @@ export default function MenuManagement() {
       );
       showToast('success', `Status "${menu.name}" diperbarui.`);
     } catch (error) {
-      if (error.response) {
-        showToast(
-          'error',
-          error.response.data?.message || 'Gagal mengubah status ketersediaan menu.'
-        );
-      } else {
-        setMenus((previous) =>
-          previous.map((item) =>
-            item.id === menu.id ? { ...item, is_available: !item.is_available } : item
-          )
-        );
-        showToast('success', 'Status diperbarui secara lokal (mode demo).');
-      }
+      showToast(
+        'error',
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Status menu belum berubah.'
+      );
     } finally {
       setTogglingId(null);
     }
@@ -238,15 +209,11 @@ export default function MenuManagement() {
       setMenus((previous) => previous.filter((menu) => menu.id !== target.id));
       showToast('success', `"${target.name}" berhasil dihapus.`);
     } catch (error) {
-      if (error.response) {
-        showToast(
-          'error',
-          error.response.data?.message || 'Gagal menghapus menu. Silakan coba lagi.'
-        );
-      } else {
-        setMenus((previous) => previous.filter((menu) => menu.id !== target.id));
-        showToast('success', 'Menu dihapus secara lokal (mode demo).');
-      }
+      showToast(
+        'error',
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Menu belum dihapus.'
+      );
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -278,6 +245,15 @@ export default function MenuManagement() {
           <span>Tambah Menu</span>
         </button>
       </div>
+
+      {loadError && (
+        <DataStateNotice
+          title="Data menu gagal dimuat"
+          message={loadError}
+          onRetry={loadAll}
+          retrying={loading}
+        />
+      )}
 
       {/* Toolbar: pencarian, kategori, status, tampilan */}
       <section
@@ -446,17 +422,39 @@ export default function MenuManagement() {
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
               <SearchX className="h-6 w-6" />
             </span>
-            <p className="text-sm font-bold text-slate-800">Menu tidak ditemukan</p>
-            <p className="max-w-sm text-xs text-slate-500">
-              Coba kata kunci lain atau ubah filter kategori dan status ketersediaan.
+            <p className="text-sm font-bold text-slate-800">
+              {menus.length === 0
+                ? loadError
+                  ? 'Data menu tidak tersedia'
+                  : 'Belum ada menu'
+                : 'Menu tidak ditemukan'}
             </p>
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="mt-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              Reset filter
-            </button>
+            <p className="max-w-sm text-xs text-slate-500">
+              {menus.length === 0
+                ? loadError
+                  ? 'Periksa koneksi server lalu coba muat ulang.'
+                  : 'Tambahkan menu pertama lewat tombol Tambah Menu.'
+                : 'Coba kata kunci lain atau ubah filter kategori dan status ketersediaan.'}
+            </p>
+            {menus.length === 0 ? (
+              loadError ? null : (
+                <button
+                  type="button"
+                  onClick={handleOpenAdd}
+                  className="mt-2 rounded-xl bg-brand-700 px-3.5 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600"
+                >
+                  Tambah Menu
+                </button>
+              )
+            ) : (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="mt-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Reset filter
+              </button>
+            )}
           </div>
         )
       ) : (
@@ -480,7 +478,9 @@ export default function MenuManagement() {
                   <tr>
                     <td colSpan={8} className="px-4 py-12 text-center">
                       <p className="text-sm font-semibold text-slate-600">
-                        Tidak ada menu yang cocok dengan filter.
+                        {menus.length === 0
+                          ? 'Belum ada menu yang tercatat.'
+                          : 'Tidak ada menu yang cocok dengan filter.'}
                       </p>
                       <button
                         type="button"

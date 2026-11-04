@@ -8,7 +8,6 @@ import {
   Grid,
   ClipboardList,
   LogOut,
-  Coffee,
   Users,
   X
 } from 'lucide-react';

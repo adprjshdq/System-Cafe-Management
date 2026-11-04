@@ -1,84 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Search, Printer, Eye, X, CheckCircle, Clock } from 'lucide-react';
+import { ClipboardList, Search, Printer, Eye, X } from 'lucide-react';
 import api from '../../services/api';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
-
-const sampleOrders = [
-  {
-    id: 1,
-    order_number: 'INV-20261009-1001',
-    customer_name: 'Bpk. Hendra',
-    order_type: 'dine_in',
-    status: 'completed',
-    subtotal: 50000,
-    tax_amount: 5000,
-    total_amount: 55000,
-    created_at: new Date(Date.now() - 45 * 60000).toISOString(),
-    table: { table_number: 'Meja 02' },
-    payment: { payment_method: 'qris', amount_paid: 55000, change_amount: 0 },
-    items: [
-      { name: 'Kopi Susu Gula Aren', quantity: 1, price: 24000, subtotal: 24000 },
-      { name: 'Signature Chocolate', quantity: 1, price: 26000, subtotal: 26000 },
-    ],
-  },
-  {
-    id: 2,
-    order_number: 'INV-20261009-1002',
-    customer_name: 'Alisa Putri',
-    order_type: 'takeaway',
-    status: 'completed',
-    subtotal: 44000,
-    tax_amount: 4400,
-    total_amount: 48400,
-    created_at: new Date(Date.now() - 30 * 60000).toISOString(),
-    table: null,
-    payment: { payment_method: 'cash', amount_paid: 50000, change_amount: 1600 },
-    items: [
-      { name: 'Iced Americano', quantity: 2, price: 22000, subtotal: 44000 },
-    ],
-  },
-  {
-    id: 3,
-    order_number: 'INV-20261009-1003',
-    customer_name: 'Reza Fauzi',
-    order_type: 'dine_in',
-    status: 'processing',
-    subtotal: 60000,
-    tax_amount: 6000,
-    total_amount: 66000,
-    created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-    table: { table_number: 'Meja 05' },
-    payment: { payment_method: 'transfer', amount_paid: 66000, change_amount: 0 },
-    items: [
-      { name: 'Spaghetti Carbonara', quantity: 1, price: 38000, subtotal: 38000 },
-      { name: 'Caramel Macchiato', quantity: 1, price: 28000, subtotal: 28000 },
-    ],
-  },
-];
+import DataStateNotice from '../../components/DataStateNotice';
 
 export default function OrderHistory() {
-  const [orders, setOrders] = useState(sampleOrders);
+  const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/v1/orders');
+      const list = res.data?.data?.data;
+      setOrders(Array.isArray(list) ? list : []);
+      setLoadError('');
+    } catch (e) {
+      console.error('Gagal memuat riwayat transaksi:', e);
+      setOrders([]);
+      setLoadError(
+        e.response?.data?.message ||
+          'Server tidak dapat dihubungi. Riwayat transaksi dikosongkan sampai data berhasil dimuat.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await api.get('/v1/orders');
-        if (res.data?.data?.data?.length) {
-          setOrders(res.data.data.data);
-        }
-      } catch (e) {
-        console.warn('API error, using sample orders:', e);
-      }
-    };
     fetchOrders();
   }, []);
 
   const filtered = orders.filter(
     (o) =>
-      o.order_number.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer_name.toLowerCase().includes(search.toLowerCase())
+      (o.order_number || '').toLowerCase().includes(search.toLowerCase()) ||
+      (o.customer_name || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -96,6 +55,15 @@ export default function OrderHistory() {
           <p className="text-xs text-slate-500">Daftar rekaman pesanan, detail transaksi, dan cetak ulang struk kasir.</p>
         </div>
       </div>
+
+      {loadError && (
+        <DataStateNotice
+          title="Riwayat transaksi gagal dimuat"
+          message={loadError}
+          onRetry={fetchOrders}
+          retrying={loading}
+        />
+      )}
 
       {/* Filter and Search */}
       <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between gap-4">
@@ -131,7 +99,24 @@ export default function OrderHistory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filtered.map((order) => (
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-10 text-center">
+                    <ClipboardList className="mx-auto mb-2 h-9 w-9 text-slate-300" />
+                    <p className="text-sm font-semibold text-slate-600">
+                      {orders.length === 0
+                        ? 'Belum ada transaksi tercatat'
+                        : 'Tidak ada transaksi yang cocok'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {orders.length === 0
+                        ? 'Riwayat akan muncul setelah ada pesanan yang dibuat.'
+                        : 'Coba kata kunci lain atau kosongkan pencarian.'}
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
                   <td className="p-4 font-mono font-bold text-slate-900">{order.order_number}</td>
                   <td className="p-4 text-slate-500">{formatDateTime(order.created_at)}</td>
@@ -167,7 +152,8 @@ export default function OrderHistory() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

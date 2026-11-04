@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ChefHat,
   Clock,
   CheckCircle2,
   Flame,
@@ -17,6 +16,7 @@ import {
   Timer,
 } from 'lucide-react';
 import api from '../../services/api';
+import DataStateNotice from '../../components/DataStateNotice';
 
 const THRESHOLDS = {
   pending: { warning: 8 * 60, late: 15 * 60 },
@@ -66,48 +66,6 @@ const URGENCY = {
   },
 };
 
-const initialSampleOrders = [
-  {
-    id: 101,
-    order_number: 'INV-20261009-8812',
-    customer_name: 'Bpk. Dimas',
-    order_type: 'dine_in',
-    status: 'pending',
-    created_at: new Date(Date.now() - 5 * 60000).toISOString(),
-    table: { table_number: 'Meja 03' },
-    items: [
-      { id: 1, name: 'Caramel Macchiato', quantity: 2, notes: 'Less sugar, Extra hot' },
-      { id: 2, name: 'Crispy French Fries', quantity: 1, notes: 'Saus terpisah' },
-    ],
-  },
-  {
-    id: 102,
-    order_number: 'INV-20261009-9134',
-    customer_name: 'Ibu Sarah',
-    order_type: 'takeaway',
-    status: 'processing',
-    created_at: new Date(Date.now() - 12 * 60000).toISOString(),
-    table: null,
-    items: [
-      { id: 3, name: 'Matcha Latte', quantity: 1, notes: 'Oat milk' },
-      { id: 4, name: 'Butter Croissant', quantity: 2, notes: 'Hangatkan' },
-    ],
-  },
-  {
-    id: 103,
-    order_number: 'INV-20261009-7741',
-    customer_name: 'Andi',
-    order_type: 'dine_in',
-    status: 'ready',
-    created_at: new Date(Date.now() - 20 * 60000).toISOString(),
-    table: { table_number: 'Meja 01' },
-    items: [
-      { id: 5, name: 'Iced Americano', quantity: 1, notes: null },
-      { id: 6, name: 'Nasi Goreng Kampung', quantity: 1, notes: 'Pedas sedang' },
-    ],
-  },
-];
-
 function formatDuration(totalSeconds) {
   const seconds = Math.max(0, Math.floor(totalSeconds));
   const hours = Math.floor(seconds / 3600);
@@ -127,8 +85,10 @@ function formatClock(dateString) {
 }
 
 export default function KitchenDisplay() {
-  const [orders, setOrders] = useState(initialSampleOrders);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [now, setNow] = useState(() => Date.now());
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem('kds_sound') !== 'off');
   const [kiosk, setKiosk] = useState(false);
@@ -229,9 +189,18 @@ export default function KitchenDisplay() {
         }
         knownIdsRef.current = ids;
         setOrders(active);
+        setLoadError('');
+      } else {
+        setOrders([]);
+        setLoadError('Respons server tidak berisi daftar pesanan.');
       }
     } catch (error) {
-      console.warn('API tidak tersedia, menampilkan contoh pesanan dapur:', error);
+      console.error('Gagal memuat antrean pesanan dapur:', error);
+      setOrders([]);
+      setLoadError(
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Antrean dapur dikosongkan sampai data berhasil dimuat.'
+      );
     } finally {
       setLoading(false);
     }
@@ -246,8 +215,14 @@ export default function KitchenDisplay() {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       await api.patch(`/v1/orders/${orderId}/status`, { status: newStatus });
+      setActionError('');
     } catch (error) {
-      console.warn('Backend tidak tersedia, status diperbarui secara lokal:', error);
+      console.error('Gagal memperbarui status pesanan:', error);
+      setActionError(
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Status pesanan belum berubah.'
+      );
+      return;
     }
     setOrders((prev) =>
       prev
@@ -271,6 +246,12 @@ export default function KitchenDisplay() {
     },
     [elapsedOf]
   );
+
+  useEffect(() => {
+    if (!actionError) return undefined;
+    const timer = setTimeout(() => setActionError(''), 6000);
+    return () => clearTimeout(timer);
+  }, [actionError]);
 
   const sortedOrders = useMemo(
     () => [...orders].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
@@ -561,6 +542,22 @@ export default function KitchenDisplay() {
     </div>
   );
 
+  const notices = (
+    <>
+      {loadError && (
+        <DataStateNotice
+          title="Antrean dapur gagal dimuat"
+          message={loadError}
+          onRetry={fetchOrders}
+          retrying={loading}
+        />
+      )}
+      {actionError && (
+        <DataStateNotice title="Status pesanan gagal diperbarui" message={actionError} />
+      )}
+    </>
+  );
+
   return (
     <>
       {newOrders.length > 0 && (
@@ -662,6 +659,8 @@ export default function KitchenDisplay() {
             </div>
           </header>
 
+          {notices}
+
           {board}
 
           <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] font-semibold text-slate-500 xl:text-xs">
@@ -707,6 +706,8 @@ export default function KitchenDisplay() {
               </button>
             </div>
           </div>
+
+          {notices}
 
           {/* Ringkasan durasi & prioritas */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

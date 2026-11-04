@@ -4,13 +4,13 @@ import {
   Armchair,
   CheckCircle2,
   Clock,
-  LayoutGrid,
   Plus,
   RefreshCw,
   Users,
   X,
 } from 'lucide-react';
 import api from '../../services/api';
+import DataStateNotice from '../../components/DataStateNotice';
 import TableTile from './TableTile';
 import TableDetailPanel from './TableDetailPanel';
 import AddTableDialog from './AddTableDialog';
@@ -21,57 +21,6 @@ import {
   getActiveOrders,
   getTableArea,
 } from './tableUtils';
-
-const minutesAgo = (minutes) =>
-  new Date(Date.now() - minutes * 60 * 1000).toISOString();
-
-const sampleOrders = {
-  2: [
-    {
-      id: 9101,
-      order_number: 'ORD-DEMO-02',
-      status: 'processing',
-      customer_name: 'Rani',
-      order_type: 'dine-in',
-      total_amount: 76000,
-      created_at: minutesAgo(18),
-    },
-  ],
-  3: [
-    {
-      id: 9102,
-      order_number: 'ORD-DEMO-03',
-      status: 'pending',
-      customer_name: 'Bagas',
-      order_type: 'dine-in',
-      total_amount: 54000,
-      created_at: minutesAgo(7),
-    },
-  ],
-  7: [
-    {
-      id: 9103,
-      order_number: 'ORD-DEMO-07',
-      status: 'ready',
-      customer_name: 'Keluarga Sari',
-      order_type: 'dine-in',
-      total_amount: 248000,
-      created_at: minutesAgo(41),
-    },
-  ],
-};
-
-const sampleTables = [
-  { id: 1, table_number: 'Meja 01', capacity: 2, area: 'indoor', status: 'available', orders: [] },
-  { id: 2, table_number: 'Meja 02', capacity: 2, area: 'indoor', status: 'occupied', orders: sampleOrders[2] },
-  { id: 3, table_number: 'Meja 03', capacity: 4, area: 'indoor', status: 'occupied', orders: sampleOrders[3] },
-  { id: 4, table_number: 'Meja 04', capacity: 4, area: 'indoor', status: 'available', orders: [] },
-  { id: 5, table_number: 'Meja 05', capacity: 6, area: 'indoor', status: 'reserved', orders: [] },
-  { id: 6, table_number: 'Meja 06', capacity: 6, area: 'indoor', status: 'available', orders: [] },
-  { id: 7, table_number: 'Meja VIP 1', capacity: 8, area: 'indoor', status: 'occupied', orders: sampleOrders[7] },
-  { id: 8, table_number: 'Outdoor 01', capacity: 4, area: 'outdoor', status: 'available', orders: [] },
-  { id: 9, table_number: 'Outdoor 02', capacity: 2, area: 'outdoor', status: 'reserved', orders: [] },
-];
 
 const AREA_ACCENT = {
   indoor: {
@@ -190,7 +139,7 @@ function StatCard({ label, value, hint, icon: Icon, iconSrc, tone }) {
 }
 
 export default function TableManagement() {
-  const [tables, setTables] = useState(sampleTables);
+  const [tables, setTables] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [orderDetail, setOrderDetail] = useState(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -199,15 +148,23 @@ export default function TableManagement() {
   const [refreshing, setRefreshing] = useState(false);
   const [toast, setToast] = useState(null);
   const [now, setNow] = useState(() => Date.now());
+  const [loadError, setLoadError] = useState('');
 
   const fetchTables = useCallback(async () => {
     try {
       const response = await api.get('/v1/tables');
-      if (Array.isArray(response.data?.data)) {
-        setTables(response.data.data);
-      }
+      const list = Array.isArray(response.data?.data) ? response.data.data : [];
+      setTables(list);
+      setLoadError('');
+      return true;
     } catch (error) {
-      console.warn('API meja tidak tersedia, menggunakan denah contoh:', error);
+      console.error('Gagal memuat denah meja:', error);
+      setTables([]);
+      setLoadError(
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Denah meja dikosongkan sampai data berhasil dimuat.'
+      );
+      return false;
     }
   }, []);
 
@@ -313,19 +270,16 @@ export default function TableManagement() {
         `${table.table_number} diperbarui menjadi ${TABLE_STATUS[status].label}.`
       );
     } catch (error) {
-      if (error.response) {
-        setTables((previous) =>
-          previous.map((item) =>
-            item.id === table.id ? { ...item, status: previousStatus } : item
-          )
-        );
-        showToast(
-          'error',
-          error.response.data?.message || 'Gagal memperbarui status meja.'
-        );
-      } else {
-        showToast('success', 'Status diperbarui secara lokal (mode demo).');
-      }
+      setTables((previous) =>
+        previous.map((item) =>
+          item.id === table.id ? { ...item, status: previousStatus } : item
+        )
+      );
+      showToast(
+        'error',
+        error.response?.data?.message ||
+          'Server tidak dapat dihubungi. Status meja belum berubah.'
+      );
     } finally {
       setUpdatingStatus(null);
     }
@@ -333,9 +287,13 @@ export default function TableManagement() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchTables();
+    const ok = await fetchTables();
     setRefreshing(false);
-    showToast('success', 'Denah meja berhasil disegarkan.');
+    if (ok) {
+      showToast('success', 'Denah meja berhasil disegarkan.');
+    } else {
+      showToast('error', 'Gagal menyegarkan denah meja. Periksa koneksi server.');
+    }
   };
 
   const handleAddTable = async (payload) => {
@@ -350,15 +308,11 @@ export default function TableManagement() {
     } catch (error) {
       if (error.response) throw error;
 
-      const localTable = {
-        id: Date.now(),
-        status: 'available',
-        orders: [],
-        ...payload,
-      };
-      setTables((previous) => [...previous, localTable]);
-      setSelectedId(localTable.id);
-      showToast('success', 'Meja ditambahkan secara lokal (mode demo).');
+      showToast(
+        'error',
+        'Server tidak dapat dihubungi. Meja belum ditambahkan, silakan coba lagi.'
+      );
+      throw error;
     }
   };
 
@@ -411,6 +365,15 @@ export default function TableManagement() {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <DataStateNotice
+          title="Denah meja gagal dimuat"
+          message={loadError}
+          onRetry={handleRefresh}
+          retrying={refreshing}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard

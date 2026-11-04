@@ -59,6 +59,7 @@ export default function Login() {
     } catch (err) {
       setErrorMsg(
         err.response?.data?.message ||
+        err.message ||
         'Login gagal. Periksa kembali email dan kata sandi Anda.'
       );
     }

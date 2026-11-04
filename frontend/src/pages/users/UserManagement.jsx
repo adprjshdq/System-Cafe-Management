@@ -16,48 +16,13 @@ import {
   KeyRound,
   Mail,
   User,
-  Shield,
   ToggleLeft,
   ToggleRight,
   Filter
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-
-const sampleUsers = [
-  {
-    id: 1,
-    name: 'Manager Admin',
-    email: 'admin@cafe.com',
-    role: 'admin',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: 'Budi Kasir',
-    email: 'kasir@cafe.com',
-    role: 'cashier',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    name: 'Chef Barista',
-    email: 'dapur@cafe.com',
-    role: 'kitchen',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    name: 'Siti Waiter',
-    email: 'pelayan@cafe.com',
-    role: 'waiter',
-    is_active: true,
-    created_at: new Date().toISOString(),
-  },
-];
+import DataStateNotice from '../../components/DataStateNotice';
 
 const roleDetails = {
   admin: {
@@ -92,8 +57,9 @@ const roleDetails = {
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState(sampleUsers);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -103,7 +69,7 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [successToast, setSuccessToast] = useState('');
+  const [toast, setToast] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -114,22 +80,32 @@ export default function UserManagement() {
     is_active: true,
   });
 
-  const showToast = (msg) => {
-    setSuccessToast(msg);
-    setTimeout(() => {
-      setSuccessToast('');
-    }, 3500);
-  };
+  const showToast = (type, message) => setToast({ type, message });
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const res = await api.get('/v1/users');
-      if (res.data?.success && res.data.data) {
+      if (res.data?.success && Array.isArray(res.data.data)) {
         setUsers(res.data.data);
+        setLoadError('');
+      } else {
+        setUsers([]);
+        setLoadError('Respons server tidak berisi daftar pengguna.');
       }
     } catch (err) {
-      console.warn('Gagal memuat pengguna via API, menggunakan data lokal:', err);
+      console.error('Gagal memuat data pengguna:', err);
+      setUsers([]);
+      setLoadError(
+        err.response?.data?.message ||
+          'Server tidak dapat dihubungi. Daftar pengguna dikosongkan sampai data berhasil dimuat.'
+      );
     } finally {
       setLoading(false);
     }
@@ -198,38 +174,47 @@ export default function UserManagement() {
 
         const res = await api.put(`/v1/users/${editingUser.id}`, payload);
         if (res.data?.success) {
-          showToast(`Akun ${formData.name} berhasil diperbarui!`);
+          showToast('success', `Akun ${formData.name} berhasil diperbarui!`);
           fetchUsers();
         }
       } else {
         const res = await api.post('/v1/users', formData);
         if (res.data?.success) {
-          showToast(`Akun ${formData.name} berhasil ditambahkan!`);
+          showToast('success', `Akun ${formData.name} berhasil ditambahkan!`);
           fetchUsers();
         }
       }
       setIsModalOpen(false);
     } catch (err) {
-      const respMsg = err.response?.data?.message || err.response?.data?.errors
-        ? Object.values(err.response?.data?.errors || {}).flat().join(', ')
-        : 'Terjadi kesalahan saat menyimpan data.';
-      setErrorMsg(respMsg);
+      const validationErrors = Object.values(err.response?.data?.errors || {})
+        .flat()
+        .join(', ');
+      setErrorMsg(
+        err.response?.data?.message ||
+          validationErrors ||
+          (err.request
+            ? 'Server tidak dapat dihubungi. Data pengguna belum tersimpan.'
+            : 'Terjadi kesalahan saat menyimpan data.')
+      );
     }
   };
 
   const handleToggleStatus = async (targetUser) => {
     if (currentUser?.id === targetUser.id) {
-      showToast('Anda tidak dapat menonaktifkan akun sendiri yang sedang dipakai.');
+      showToast('error', 'Anda tidak dapat menonaktifkan akun sendiri yang sedang dipakai.');
       return;
     }
 
     try {
       await api.patch(`/v1/users/${targetUser.id}/toggle-status`);
-      showToast(`Status ${targetUser.name} berhasil diubah.`);
+      showToast('success', `Status ${targetUser.name} berhasil diubah.`);
       fetchUsers();
     } catch (err) {
-      // Local fallback toggle
-      setUsers(users.map(u => u.id === targetUser.id ? { ...u, is_active: !u.is_active } : u));
+      showToast(
+        'error',
+        err.response?.data?.message ||
+          'Server tidak dapat dihubungi. Status pengguna belum berubah.'
+      );
     }
   };
 
@@ -238,12 +223,14 @@ export default function UserManagement() {
     try {
       const res = await api.delete(`/v1/users/${deleteConfirmUser.id}`);
       if (res.data?.success) {
-        showToast(`Akun ${deleteConfirmUser.name} berhasil dihapus.`);
+        showToast('success', `Akun ${deleteConfirmUser.name} berhasil dihapus.`);
         fetchUsers();
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Gagal menghapus pengguna.';
-      alert(msg);
+      const msg =
+        err.response?.data?.message ||
+        'Server tidak dapat dihubungi. Pengguna belum dihapus.';
+      showToast('error', msg);
     } finally {
       setDeleteConfirmUser(null);
     }
@@ -279,10 +266,19 @@ export default function UserManagement() {
   return (
     <div className="space-y-6">
       {/* Toast Notification */}
-      {successToast && (
-        <div className="fixed top-20 right-6 z-50 flex items-center space-x-2 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl animate-fade-in text-sm font-medium">
-          <CheckCircle2 className="w-5 h-5 text-white" />
-          <span>{successToast}</span>
+      {toast && (
+        <div
+          role={toast.type === 'error' ? 'alert' : 'status'}
+          className={`fixed top-20 right-6 z-50 flex items-center space-x-2 px-4 py-3 rounded-xl shadow-xl animate-fade-in text-sm font-medium text-white ${
+            toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'
+          }`}
+        >
+          {toast.type === 'error' ? (
+            <AlertCircle className="w-5 h-5 text-white" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-white" />
+          )}
+          <span>{toast.message}</span>
         </div>
       )}
 
@@ -313,6 +309,15 @@ export default function UserManagement() {
           <span>Tambah Pengguna</span>
         </button>
       </div>
+
+      {loadError && (
+        <DataStateNotice
+          title="Data pengguna gagal dimuat"
+          message={loadError}
+          onRetry={fetchUsers}
+          retrying={loading}
+        />
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
@@ -475,8 +480,20 @@ export default function UserManagement() {
                 <tr>
                   <td colSpan="5" className="py-12 text-center text-slate-400">
                     <Users className="w-10 h-10 mx-auto text-slate-300 mb-2" />
-                    <p className="font-medium text-slate-600">Tidak ada data pengguna yang cocok</p>
-                    <p className="text-xs text-slate-400">Coba ubah kata kunci pencarian atau filter role.</p>
+                    <p className="font-medium text-slate-600">
+                      {users.length === 0
+                        ? loadError
+                          ? 'Data pengguna tidak tersedia'
+                          : 'Belum ada data pengguna'
+                        : 'Tidak ada data pengguna yang cocok'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {users.length === 0
+                        ? loadError
+                          ? 'Periksa koneksi server lalu coba muat ulang.'
+                          : 'Tambahkan akun staf lewat tombol Tambah Pengguna.'
+                        : 'Coba ubah kata kunci pencarian atau filter role.'}
+                    </p>
                   </td>
                 </tr>
               ) : (
