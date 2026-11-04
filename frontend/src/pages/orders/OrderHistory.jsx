@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { ClipboardList, Search, Printer, Eye, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ClipboardList,
+  Eye,
+  Printer,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import DataStateNotice from '../../components/DataStateNotice';
+import ConfirmDialog from '../menus/ConfirmDialog';
 
 export default function OrderHistory() {
+  const { role } = useAuth();
+  const canDelete = role === 'admin';
+
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
 
@@ -33,6 +50,36 @@ export default function OrderHistory() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const showToast = (type, message) => setToast({ type, message });
+
+  const handleDelete = async () => {
+    if (!deleteTarget || deleting) return;
+
+    setDeleting(true);
+    try {
+      await api.delete(`/v1/orders/${deleteTarget.id}`);
+      setOrders((prev) => prev.filter((order) => order.id !== deleteTarget.id));
+      if (selectedOrder?.id === deleteTarget.id) setSelectedOrder(null);
+      showToast('success', `Pesanan ${deleteTarget.order_number} berhasil dihapus.`);
+      setDeleteTarget(null);
+    } catch (e) {
+      console.error('Gagal menghapus pesanan:', e);
+      showToast(
+        'error',
+        e.response?.data?.message ||
+          'Server tidak dapat dihubungi. Pesanan belum dihapus, silakan coba lagi.'
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filtered = orders.filter(
     (o) =>
@@ -63,6 +110,22 @@ export default function OrderHistory() {
           onRetry={fetchOrders}
           retrying={loading}
         />
+      )}
+
+      {toast && (
+        <div
+          role={toast.type === 'error' ? 'alert' : 'status'}
+          className={`fixed top-20 right-6 z-[80] flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white shadow-xl animate-fade-in ${
+            toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'
+          }`}
+        >
+          {toast.type === 'error' ? (
+            <AlertCircle className="h-5 w-5 shrink-0" />
+          ) : (
+            <CheckCircle2 className="h-5 w-5 shrink-0" />
+          )}
+          <span>{toast.message}</span>
+        </div>
       )}
 
       {/* Filter and Search */}
@@ -143,13 +206,28 @@ export default function OrderHistory() {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <button
-                      onClick={() => setSelectedOrder(order)}
-                      className="px-2.5 py-1.5 border border-slate-200 hover:bg-slate-100 rounded-lg text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Detail & Struk</span>
-                    </button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="px-2.5 py-1.5 border border-slate-200 hover:bg-slate-100 rounded-lg text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Detail & Struk</span>
+                      </button>
+
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(order)}
+                          aria-label={`Hapus pesanan ${order.order_number}`}
+                          title="Hapus pesanan"
+                          className="px-2.5 py-1.5 border border-rose-200 hover:bg-rose-50 rounded-lg text-rose-600 text-xs font-semibold inline-flex items-center gap-1.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Hapus</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
                 ))
@@ -223,6 +301,23 @@ export default function OrderHistory() {
             </div>
           </div>
         </div>
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Hapus pesanan ini?"
+          description={
+            ['pending', 'processing', 'ready'].includes(deleteTarget.status)
+              ? `Pesanan ${deleteTarget.order_number} akan dihapus permanen. Stok menu dikembalikan dan meja dibebaskan bila tidak ada pesanan aktif lain. Tindakan ini tidak dapat dibatalkan.`
+              : `Pesanan ${deleteTarget.order_number} akan dihapus permanen beserta rincian item dan pembayarannya. Tindakan ini tidak dapat dibatalkan.`
+          }
+          confirmLabel="Hapus Pesanan"
+          loading={deleting}
+          onCancel={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
+          onConfirm={handleDelete}
+        />
       )}
     </div>
   );

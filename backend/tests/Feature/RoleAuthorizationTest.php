@@ -26,14 +26,14 @@ class RoleAuthorizationTest extends TestCase
     {
         $category = Category::create([
             'name' => 'QA Category',
-            'slug' => 'qa-category-' . uniqid(),
+            'slug' => 'qa-category-'.uniqid(),
             'is_active' => true,
         ]);
 
         return Menu::create([
             'category_id' => $category->id,
             'name' => 'QA Coffee',
-            'slug' => 'qa-coffee-' . uniqid(),
+            'slug' => 'qa-coffee-'.uniqid(),
             'price' => 20000,
             'cost_price' => 5000,
             'is_available' => true,
@@ -44,7 +44,7 @@ class RoleAuthorizationTest extends TestCase
     private function makeOrder(): Order
     {
         return Order::create([
-            'order_number' => 'QA-' . uniqid(),
+            'order_number' => 'QA-'.uniqid(),
             'customer_name' => 'Tamu QA',
             'order_type' => 'dine_in',
             'status' => 'pending',
@@ -109,7 +109,7 @@ class RoleAuthorizationTest extends TestCase
         foreach (['waiter', 'kitchen'] as $role) {
             $this->actingAs($this->userWithRole($role), 'sanctum')
                 ->postJson('/api/v1/tables', [
-                    'table_number' => 'Meja ' . $role,
+                    'table_number' => 'Meja '.$role,
                     'capacity' => 2,
                 ])
                 ->assertForbidden();
@@ -124,7 +124,7 @@ class RoleAuthorizationTest extends TestCase
 
         foreach (['cashier', 'kitchen', 'waiter'] as $role) {
             $this->actingAs($this->userWithRole($role), 'sanctum')
-                ->postJson('/api/v1/categories', ['name' => 'QA ' . $role])
+                ->postJson('/api/v1/categories', ['name' => 'QA '.$role])
                 ->assertForbidden();
         }
     }
@@ -294,5 +294,147 @@ class RoleAuthorizationTest extends TestCase
                 'amount_paid' => 25000,
             ])
             ->assertOk();
+    }
+
+    public function test_only_admin_can_delete_orders(): void
+    {
+        $order = $this->makeOrder();
+
+        foreach (['cashier', 'kitchen', 'waiter'] as $role) {
+            $this->actingAs($this->userWithRole($role), 'sanctum')
+                ->deleteJson("/api/v1/orders/{$order->id}")
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseHas('orders', ['id' => $order->id]);
+
+        $this->actingAs($this->userWithRole('admin'), 'sanctum')
+            ->deleteJson("/api/v1/orders/{$order->id}")
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Pesanan berhasil dihapus',
+            ]);
+
+        $this->assertDatabaseMissing('orders', ['id' => $order->id]);
+    }
+
+    public function test_deleting_active_order_restores_stock_and_frees_table(): void
+    {
+        $menu = $this->makeMenu();
+        $table = CafeTable::create([
+            'table_number' => 'Meja Hapus Aktif',
+            'capacity' => 4,
+            'area' => 'indoor',
+            'status' => 'available',
+        ]);
+
+        $orderId = $this->actingAs($this->userWithRole('cashier'), 'sanctum')
+            ->postJson('/api/v1/orders', [
+                'table_id' => $table->id,
+                'order_type' => 'dine_in',
+                'items' => [['menu_id' => $menu->id, 'quantity' => 3]],
+                'payment' => [
+                    'method' => 'cash',
+                    'amount_paid' => 100000,
+                ],
+            ])
+            ->assertCreated()
+            ->json('data.id');
+
+        $this->assertSame(7, $menu->fresh()->stock);
+        $this->assertSame('occupied', $table->fresh()->status);
+        $this->assertDatabaseHas('order_items', ['order_id' => $orderId]);
+        $this->assertDatabaseHas('payments', ['order_id' => $orderId]);
+
+        $this->actingAs($this->userWithRole('admin'), 'sanctum')
+            ->deleteJson("/api/v1/orders/{$orderId}")
+            ->assertOk();
+
+        $this->assertSame(10, $menu->fresh()->stock);
+        $this->assertSame('available', $table->fresh()->status);
+        $this->assertDatabaseMissing('order_items', ['order_id' => $orderId]);
+        $this->assertDatabaseMissing('payments', ['order_id' => $orderId]);
+    }
+
+    public function test_deleting_completed_order_does_not_restore_stock(): void
+    {
+        $menu = $this->makeMenu();
+        $table = CafeTable::create([
+            'table_number' => 'Meja Hapus Selesai',
+            'capacity' => 2,
+            'area' => 'indoor',
+            'status' => 'occupied',
+        ]);
+
+        $order = Order::create([
+            'order_number' => 'QA-SELESAI-'.uniqid(),
+            'table_id' => $table->id,
+            'customer_name' => 'Tamu QA',
+            'order_type' => 'dine_in',
+            'status' => 'completed',
+            'subtotal' => 40000,
+            'tax_amount' => 4000,
+            'total_amount' => 44000,
+        ]);
+
+        $order->items()->create([
+            'menu_id' => $menu->id,
+            'quantity' => 2,
+            'unit_price' => 20000,
+            'subtotal' => 40000,
+            'item_status' => 'ready',
+        ]);
+
+        $this->actingAs($this->userWithRole('admin'), 'sanctum')
+            ->deleteJson("/api/v1/orders/{$order->id}")
+            ->assertOk();
+
+        $this->assertSame(10, $menu->fresh()->stock);
+        $this->assertSame('available', $table->fresh()->status);
+    }
+
+    public function test_deleting_order_keeps_table_occupied_when_another_active_order_exists(): void
+    {
+        $table = CafeTable::create([
+            'table_number' => 'Meja Hapus Ganda',
+            'capacity' => 4,
+            'area' => 'indoor',
+            'status' => 'occupied',
+        ]);
+
+        $firstOrder = Order::create([
+            'order_number' => 'QA-GANDA-1-'.uniqid(),
+            'table_id' => $table->id,
+            'customer_name' => 'Tamu QA',
+            'order_type' => 'dine_in',
+            'status' => 'pending',
+            'subtotal' => 20000,
+            'tax_amount' => 2000,
+            'total_amount' => 22000,
+        ]);
+
+        $secondOrder = Order::create([
+            'order_number' => 'QA-GANDA-2-'.uniqid(),
+            'table_id' => $table->id,
+            'customer_name' => 'Tamu QA',
+            'order_type' => 'dine_in',
+            'status' => 'processing',
+            'subtotal' => 20000,
+            'tax_amount' => 2000,
+            'total_amount' => 22000,
+        ]);
+
+        $this->actingAs($this->userWithRole('admin'), 'sanctum')
+            ->deleteJson("/api/v1/orders/{$firstOrder->id}")
+            ->assertOk();
+
+        $this->assertSame('occupied', $table->fresh()->status);
+
+        $this->actingAs($this->userWithRole('admin'), 'sanctum')
+            ->deleteJson("/api/v1/orders/{$secondOrder->id}")
+            ->assertOk();
+
+        $this->assertSame('available', $table->fresh()->status);
     }
 }

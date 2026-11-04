@@ -100,6 +100,8 @@ Semua akun menggunakan kata sandi default: `password123`
 | `POST` | `/api/v1/menus` | Tambah menu baru (HPP & harga jual) |
 | `GET` | `/api/v1/tables` | List meja & status keterisian |
 | `POST` | `/api/v1/orders` | Checkout transaksi POS & kalkulasi total |
+| `GET` | `/api/v1/orders` | Riwayat transaksi pesanan |
+| `DELETE`| `/api/v1/orders/{id}` | Hapus pesanan (khusus admin, stok aktif dikembalikan) |
 | `PATCH`| `/api/v1/orders/{id}/status`| Update status antrean pesanan |
 | `POST` | `/api/v1/orders/{id}/pay` | Pemrosesan pembayaran & pelunasan |
 | `GET` | `/api/v1/orders/{id}/receipt`| Ambil data cetak struk kasir |

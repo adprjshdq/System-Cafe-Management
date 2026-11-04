@@ -74,7 +74,7 @@ class OrderController extends Controller
         return DB::transaction(function () use ($validated, $request) {
             $datePrefix = date('Ymd');
             $randomSuffix = strtoupper(Str::random(4));
-            $orderNumber = 'INV-' . $datePrefix . '-' . $randomSuffix;
+            $orderNumber = 'INV-'.$datePrefix.'-'.$randomSuffix;
 
             $subtotal = 0;
             $itemsData = [];
@@ -170,6 +170,41 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'data' => $order,
+        ]);
+    }
+
+    public function destroy(Order $order): JsonResponse
+    {
+        DB::transaction(function () use ($order) {
+            $tableId = $order->table_id;
+
+            // Stok sudah dikembalikan saat pesanan dibatalkan. Untuk pesanan
+            // yang masih aktif, kembalikan stok karena pesanan tidak jadi.
+            if (in_array($order->status, ['pending', 'processing', 'ready'], true)) {
+                foreach ($order->items()->get() as $item) {
+                    Menu::where('id', $item->menu_id)
+                        ->whereNotNull('stock')
+                        ->increment('stock', $item->quantity);
+                }
+            }
+
+            // Item pesanan dan pembayaran terhapus otomatis lewat cascade.
+            $order->delete();
+
+            if ($tableId) {
+                $otherActiveOrders = Order::where('table_id', $tableId)
+                    ->whereIn('status', ['pending', 'processing', 'ready'])
+                    ->exists();
+
+                if (! $otherActiveOrders) {
+                    CafeTable::where('id', $tableId)->update(['status' => 'available']);
+                }
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pesanan berhasil dihapus',
         ]);
     }
 

@@ -66,6 +66,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/orders/{order}', [OrderController::class, 'show'])
             ->middleware('role:cashier,kitchen');
 
+        // Hapus riwayat pesanan — hanya admin.
+        Route::delete('/orders/{order}', [OrderController::class, 'destroy'])
+            ->middleware('role:admin');
+
         // Buat pesanan: kasir & pelayan (POS dari meja).
         Route::post('/orders', [OrderController::class, 'store'])
             ->middleware('role:cashier,waiter');
