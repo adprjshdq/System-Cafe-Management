@@ -382,7 +382,7 @@ export default function TableManagement() {
           hint={`${stats.seats} kursi di ${grouped.indoor.length > 0 && grouped.outdoor.length > 0 ? '2 area' : 'denah'}`}
           icon={Armchair}
           iconSrc="/denah_meja.png"
-          tone="bg-slate-50 text-slate-600"
+          tone="text-slate-600"
         />
         <StatCard
           label="Tersedia"
@@ -390,7 +390,7 @@ export default function TableManagement() {
           hint="Meja kosong siap dipakai"
           icon={CheckCircle2}
           iconSrc="/icon_ceklis.png"
-          tone="bg-emerald-50 text-emerald-700"
+          tone="text-emerald-700"
         />
         <StatCard
           label="Terisi"
@@ -398,7 +398,7 @@ export default function TableManagement() {
           hint="Ada tamu / pesanan aktif"
           icon={Users}
           iconSrc="/icon_user.png"
-          tone="bg-rose-50 text-rose-700"
+          tone="text-rose-700"
         />
         <StatCard
           label="Reservasi"
@@ -406,7 +406,7 @@ export default function TableManagement() {
           hint="Menunggu tamu booking"
           icon={Clock}
           iconSrc="/icon_waktu.png"
-          tone="bg-brand-50 text-brand-700"
+          tone="text-brand-700"
         />
       </div>
 
@@ -457,7 +457,7 @@ export default function TableManagement() {
         <aside className="hidden xl:sticky xl:top-6 xl:block">
           {detailPanel || (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center shadow-xs">
-              <span className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl">
                 <img
                   src="/denah_meja.png"
                   alt="Kursi"

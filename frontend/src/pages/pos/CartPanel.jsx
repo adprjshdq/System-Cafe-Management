@@ -46,7 +46,7 @@ export default function CartPanel({
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
             <img
               src="/icon_keranjang.png"
               alt="Keranjang Pesanan"
